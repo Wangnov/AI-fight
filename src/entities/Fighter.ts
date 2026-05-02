@@ -25,6 +25,7 @@ import { Projectile } from './Projectile';
 import type { AABB, AttackKind, FighterId } from '../types';
 import type { SpriteSet } from '../assets/SpriteSet';
 import type { FrameKey } from '../assets/spriteFrames';
+import { WALK_CYCLE_KEYS } from '../assets/spriteFrames';
 
 const SPRITE_DISPLAY_HEIGHT = 380; // 角色 sprite 显示高度（视觉略大于 FIGHTER_HEIGHT 的 hurtbox）
 
@@ -234,38 +235,68 @@ export class Fighter extends Container {
   }
 
   private pickFrameKey(): FrameKey {
+    // 受击 / 胜负 / 简单状态帧
     if (this.state === 'hit') return 'hit';
     if (this.state === 'win') return 'win';
     if (this.state === 'lose') return 'lose';
+    if (this.state === 'jump') return 'jump';
+    if (this.state === 'crouch') return 'crouch';
+    if (this.state === 'block') return 'block';
 
     if (this.state === 'attack' && this.attack) {
       const a = this.attack;
+      const startup = a.data.startup;
+      const active = a.data.active;
+      const totalNonRecovery = startup + active;
+      const isAltman = this.preset.name === 'ALTMAN';
+
       if (a.kind === 'jab') {
-        const startup = a.data.startup;
-        const active = a.data.active;
         if (a.frame < startup) return 'jab_01';
-        if (a.frame < startup + active) return 'jab_02';
+        if (a.frame < totalNonRecovery) return 'jab_02';
         return 'jab_03';
       }
-      // combo1 投射物：用蓄力姿势作占位
-      if (a.kind === 'combo1') return 'jab_01';
-      // combo2 近战重击：用出拳关键帧作占位
-      if (a.kind === 'combo2') return 'jab_02';
-      // ultimate：暂用出拳关键帧
-      if (a.kind === 'ultimate') return 'jab_02';
+
+      if (a.kind === 'combo1') {
+        // 组合技 1：投射物。startup 蓄力 → release 投出
+        if (a.frame < startup) {
+          return isAltman ? 'codex_cast' : 'mythos_cast';
+        }
+        return isAltman ? 'codex_throw' : 'mythos_release';
+      }
+
+      if (a.kind === 'combo2') {
+        // 组合技 2：近战重击。startup 蓄力 → 挥出
+        if (a.frame < startup) {
+          return isAltman ? 'benchmark_windup' : 'constitution_cast';
+        }
+        return isAltman ? 'benchmark_swing' : 'constitution_swing';
+      }
+
+      if (a.kind === 'ultimate') {
+        // 大招分阶段（Altman 4 阶段, Dario 3 阶段）— 按 frame 进度切贴图
+        const total = startup + active + a.data.recovery;
+        const phase = a.frame / Math.max(total, 1);
+        if (isAltman) {
+          if (phase < 0.25) return 'sit_down';
+          if (phase < 0.5) return 'lean_back';
+          if (phase < 0.75) return 'burst';
+          return 'recover';
+        }
+        if (phase < 0.4) return 'judge_pose';
+        if (phase < 0.7) return 'slam';
+        return 'recover';
+      }
     }
 
     if (this.state === 'walk') {
-      // 16 帧切一次（约 0.27 秒一只脚跨步的半 cycle），跟 vertical bounce
-      // 节奏对齐：bounce 抬起最高点恰好是切到下一帧的瞬间，让"瞬切"被
-      // 节奏掩盖，看起来像换腿而不是传送
-      return Math.floor(this.elapsedFrames / 16) % 2 === 0 ? 'walk_01' : 'walk_02';
+      // 8 帧 walk cycle（contact_L / down_L / passing_L / up_L /
+      // contact_R / down_R / passing_R / up_R），每 6 帧切一次
+      // → 整 cycle 48 帧 ≈ 0.8s @60fps，约 1.25 cycle/s（2.5 步/秒）
+      const idx = Math.floor(this.elapsedFrames / 6) % 8;
+      return WALK_CYCLE_KEYS[idx];
     }
 
-    // 街机 idle 默认是双拳举起的战斗预备 stance（idle_01）。
-    // idle_02（手垂下放松站姿）目前不直接挂哪个 state，留作未来
-    // between-rounds / 入场展示等场景。block / jump / crouch 暂用同一
-    // idle_01 stance，靠 tint / 后续专门帧区分。
+    // idle 锁定 idle_01 静态贴图，呼吸由 sprite.scale.y 节奏 (applySpriteRhythm) 模拟
     return 'idle_01';
   }
 
