@@ -52,7 +52,7 @@ export class BattleScene extends Scene {
   private readonly aiController: AIController | null = null;
   private readonly aiInput: VirtualInputProvider | null = null;
   private readonly combat: CombatSystem;
-  private readonly effects: ScreenEffects;
+  private readonly screenEffects: ScreenEffects;
   private readonly hud: HUD;
   private readonly projectiles: Projectile[] = [];
 
@@ -124,7 +124,7 @@ export class BattleScene extends Scene {
 
     // === 效果与战斗系统 ===
     this.overlayLayer = new Container();
-    this.effects = new ScreenEffects(
+    this.screenEffects = new ScreenEffects(
       this.worldLayer,
       this.overlayLayer,
       STAGE_WIDTH,
@@ -133,7 +133,7 @@ export class BattleScene extends Scene {
     this.combat = new CombatSystem(
       [this.p1, this.p2],
       () => this.projectiles,
-      this.effects
+      this.screenEffects
     );
 
     this.addChild(this.overlayLayer);
@@ -205,7 +205,7 @@ export class BattleScene extends Scene {
     }
 
     // === 视觉效果推进 ===
-    this.effects.update();
+    this.screenEffects.update();
 
     // === HUD ===
     this.hud.update(this.timeLeftMS / 1000);
