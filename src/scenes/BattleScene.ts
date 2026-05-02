@@ -1,4 +1,4 @@
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import {
   FIGHTER_WIDTH,
   FLOOR_COLOR,
@@ -22,11 +22,12 @@ import {
   HumanInputProvider,
   VirtualInputProvider,
 } from '../input/InputProvider';
-import { CombatSystem } from '../systems/CombatSystem';
+import { CombatSystem, type CombatEvent } from '../systems/CombatSystem';
 import { ScreenEffects } from '../systems/ScreenEffects';
 import { AIController } from '../systems/AIController';
 import { HUD } from '../ui/HUD';
 import type { SpriteSet } from '../assets/SpriteSet';
+import { HitEffectsLayer } from '../systems/HitEffectsLayer';
 
 export type BattleMode = 'pvp' | 'pve';
 export type BattleResult =
@@ -36,7 +37,12 @@ export type BattleResult =
 export interface BattleSceneOptions {
   input: InputManager;
   mode: BattleMode;
-  sprites?: { altman: SpriteSet; dario: SpriteSet };
+  sprites?: {
+    altman: SpriteSet;
+    dario: SpriteSet;
+    vfx: SpriteSet;
+    bgArena: Texture;
+  };
   onEnd: (result: BattleResult) => void;
 }
 
@@ -58,6 +64,8 @@ export class BattleScene extends Scene {
   private readonly screenEffects: ScreenEffects;
   private readonly hud: HUD;
   private readonly projectiles: Projectile[] = [];
+  private readonly hitEffects: HitEffectsLayer | null;
+  private readonly vfxSprites: SpriteSet | null;
 
   private timeLeftMS = ROUND_TIME_SECONDS * 1000;
   private ended = false;
@@ -69,25 +77,34 @@ export class BattleScene extends Scene {
     this.mode = opts.mode;
     this.onEnd = opts.onEnd;
 
-    // === 背景 / 地面（不参与 shake）===
-    const bg = new Graphics()
-      .rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT)
-      .fill(STAGE_BG_COLOR);
-    this.addChild(bg);
+    // === 背景：实图 bg_arena 替换原灰色矩形（fallback 留 Graphics 兜底）===
+    if (opts.sprites?.bgArena) {
+      const bg = new Sprite(opts.sprites.bgArena);
+      bg.width = STAGE_WIDTH;
+      bg.height = STAGE_HEIGHT;
+      this.addChild(bg);
+    } else {
+      const bg = new Graphics()
+        .rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT)
+        .fill(STAGE_BG_COLOR);
+      this.addChild(bg);
+    }
 
     const subtitle = new Text({
       text: 'PUBLIC BENEFIT?  PRIVATE ACCESS?',
       style: {
         fontFamily: 'system-ui',
         fontSize: 16,
-        fill: 0x4b5563,
+        fill: 0xffffff,
         letterSpacing: 4,
         fontWeight: 'bold',
+        dropShadow: { color: 0x000000, blur: 4, distance: 2, angle: Math.PI / 4 },
       },
     });
     subtitle.anchor.set(0.5, 0);
     subtitle.x = STAGE_WIDTH / 2;
     subtitle.y = GROUND_Y + 30;
+    subtitle.alpha = 0.6;
     this.addChild(subtitle);
 
     // === 世界层（受 shake 影响）===
@@ -115,9 +132,22 @@ export class BattleScene extends Scene {
     if (opts.sprites) {
       this.p1.setSpriteSet(opts.sprites.altman);
       this.p2.setSpriteSet(opts.sprites.dario);
+      this.p1.setVfxSet(opts.sprites.vfx);
+      this.p2.setVfxSet(opts.sprites.vfx);
+      this.vfxSprites = opts.sprites.vfx;
+    } else {
+      this.vfxSprites = null;
     }
     this.fightersLayer.addChild(this.p1);
     this.fightersLayer.addChild(this.p2);
+
+    // === 命中效果层（火花 + 字效，受 shake 影响）===
+    if (this.vfxSprites) {
+      this.hitEffects = new HitEffectsLayer(this.vfxSprites);
+      this.worldLayer.addChild(this.hitEffects);
+    } else {
+      this.hitEffects = null;
+    }
 
     // === 输入绑定 ===
     this.p1.setInput(new HumanInputProvider(this.input, KEYS_P1));
@@ -203,6 +233,16 @@ export class BattleScene extends Scene {
 
     // === 命中判定 ===
     this.combat.step();
+
+    // === 命中火花 + 字效弹出 ===
+    if (this.hitEffects && this.combat.events.length > 0) {
+      const hitPoints = new Map<string, { x: number; y: number }>([
+        ['P1', { x: this.p1.x, y: this.p1.y - 130 }],
+        ['P2', { x: this.p2.x, y: this.p2.y - 130 }],
+      ]);
+      this.hitEffects.ingest(this.combat.events, hitPoints);
+    }
+    this.hitEffects?.update();
 
     // === 死掉的投射物清理 ===
     for (let i = this.projectiles.length - 1; i >= 0; i -= 1) {

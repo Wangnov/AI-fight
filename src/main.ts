@@ -1,4 +1,4 @@
-import { Application } from 'pixi.js';
+import { Application, Assets, type Texture } from 'pixi.js';
 import {
   STAGE_BG_COLOR,
   STAGE_HEIGHT,
@@ -11,6 +11,7 @@ import { MenuScene } from './scenes/MenuScene';
 import { ResultScene } from './scenes/ResultScene';
 import { SpriteSet } from './assets/SpriteSet';
 import { ALTMAN_FRAMES, DARIO_FRAMES } from './assets/spriteFrames';
+import { VFX_FRAMES } from './assets/vfxFrames';
 
 (async () => {
   const app = new Application();
@@ -28,6 +29,11 @@ import { ALTMAN_FRAMES, DARIO_FRAMES } from './assets/spriteFrames';
   if (!mountPoint) throw new Error('#app element missing');
   mountPoint.appendChild(app.canvas);
 
+  // Dev: import.meta.env.DEV 时暴露 app 给浏览器 devtools 调试
+  if (import.meta.env.DEV) {
+    (globalThis as unknown as { __pixiApp: unknown }).__pixiApp = app;
+  }
+
   // 画布自适应：窗口窄于 1280×720 时整体等比缩放，宽于则放大
   const fitToWindow = (): void => {
     const scale = Math.min(
@@ -44,10 +50,12 @@ import { ALTMAN_FRAMES, DARIO_FRAMES } from './assets/spriteFrames';
 
   const manager = new SceneManager(app.stage);
 
-  // 启动期一次性异步加载两套 sprite，加载完才进入菜单
-  const [altmanSprites, darioSprites] = await Promise.all([
+  // 启动期一次性异步加载所有视觉资产：两套 sprite + VFX + 场景背景
+  const [altmanSprites, darioSprites, vfxSprites, bgArena] = await Promise.all([
     SpriteSet.load(ALTMAN_FRAMES),
     SpriteSet.load(DARIO_FRAMES),
+    SpriteSet.load(VFX_FRAMES, 'hit_spark'),
+    Assets.load<Texture>('/sprites/scene/bg_arena.png'),
   ]);
 
   const showMenu = (): void => {
@@ -64,7 +72,7 @@ import { ALTMAN_FRAMES, DARIO_FRAMES } from './assets/spriteFrames';
       new BattleScene({
         input,
         mode,
-        sprites: { altman: altmanSprites, dario: darioSprites },
+        sprites: { altman: altmanSprites, dario: darioSprites, vfx: vfxSprites, bgArena },
         onEnd: (result) => showResult(result),
       })
     );

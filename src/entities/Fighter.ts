@@ -77,6 +77,7 @@ export class Fighter extends Container {
   private sprite!: Sprite;
   private spriteSet: SpriteSet | null = null;
   private spriteBaseScale = 1; // setSpriteSet 时根据 sprite 高度算出，是 idle/walk 节奏的基准
+  private vfxSet: SpriteSet | null = null;
   private elapsedFrames = 0;
 
   // 输出给场景
@@ -317,6 +318,15 @@ export class Fighter extends Container {
     this.opponent = other;
   }
 
+  setVfxSet(vfx: SpriteSet): void {
+    this.vfxSet = vfx;
+  }
+
+  /** 投射物用的 vfx 贴图 key（按角色分配）— Altman 抛 PR 文件夹，Dario 抛漏洞碎片 */
+  getProjectileVfxKey(): string {
+    return this.preset.name === 'ALTMAN' ? 'pr_folder' : 'vulnerability_shard';
+  }
+
   /**
    * 推进一逻辑帧。frozen=true 表示场景级冻结（HitStop）。
    */
@@ -455,13 +465,15 @@ export class Fighter extends Container {
 
     // combo1：在 startup 帧到达时生成投射物
     if (a.kind === 'combo1' && !a.spawnedProjectile && a.frame >= PROJECTILE_COMBO_1.startup) {
+      const texture = this.vfxSet?.get(this.getProjectileVfxKey()) ?? null;
       const proj = new Projectile(
         this.x + 60 * this.facing,
         this.y - FIGHTER_HEIGHT * 0.6,
         this.facing,
         this.preset.projectileColor,
         PROJECTILE_COMBO_1,
-        this.id
+        this.id,
+        texture
       );
       this.pendingProjectiles.push(proj);
       a.spawnedProjectile = true;
