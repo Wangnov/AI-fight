@@ -69,6 +69,7 @@ export class Fighter extends Container {
   private hitstunFrames = 0;
   hitstopFrames = 0;
   stunFrames = 0; // 大招封锁
+  private ultimateAcked = false; // 防止 BattleScene 重复触发分镜演出
 
   // 视觉
   private body!: Graphics;
@@ -109,20 +110,8 @@ export class Fighter extends Container {
     this.addChild(this.faceMarker);
     this.addChild(this.sprite);
 
-    // 名字标签
-    const label = new Text({
-      text: this.preset.name,
-      style: {
-        fontFamily: 'system-ui, Arial',
-        fontSize: 14,
-        fill: 0xffffff,
-        fontWeight: 'bold',
-      },
-    });
-    label.anchor.set(0.5, 1);
-    label.x = 0;
-    label.y = -SPRITE_DISPLAY_HEIGHT - 8;
-    this.addChild(label);
+    // 名字标签 — HUD 顶部已经显示了，角色头顶不再重复
+    // （保留代码占位，便于将来需要时启用）
 
     this.redraw();
   }
@@ -325,6 +314,26 @@ export class Fighter extends Container {
   /** 投射物用的 vfx 贴图 key（按角色分配）— Altman 抛 PR 文件夹，Dario 抛漏洞碎片 */
   getProjectileVfxKey(): string {
     return this.preset.name === 'ALTMAN' ? 'pr_folder' : 'vulnerability_shard';
+  }
+
+  /** BattleScene 调：检测大招触发（仅在新进入 ultimate 后第一次返回 true） */
+  consumeUltimateTrigger(): boolean {
+    const inUltimate = this.state === 'attack' && this.attack?.kind === 'ultimate';
+    if (inUltimate && !this.ultimateAcked) {
+      this.ultimateAcked = true;
+      return true;
+    }
+    if (!inUltimate) {
+      this.ultimateAcked = false;
+    }
+    return false;
+  }
+
+  /** 立即取消当前攻击（cinematic 接管大招逻辑后调用） */
+  cancelAttack(): void {
+    this.attack = null;
+    this.state = 'idle';
+    this.vx = 0;
   }
 
   /**

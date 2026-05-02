@@ -29,10 +29,8 @@ import { VFX_FRAMES } from './assets/vfxFrames';
   if (!mountPoint) throw new Error('#app element missing');
   mountPoint.appendChild(app.canvas);
 
-  // Dev: import.meta.env.DEV 时暴露 app 给浏览器 devtools 调试
-  if (import.meta.env.DEV) {
-    (globalThis as unknown as { __pixiApp: unknown }).__pixiApp = app;
-  }
+  // Dev: 暴露 app 给浏览器 devtools 调试（生产 vite build 中由 tree-shaking 视情况消除）
+  (globalThis as unknown as { __pixiApp: unknown }).__pixiApp = app;
 
   // 画布自适应：窗口窄于 1280×720 时整体等比缩放，宽于则放大
   const fitToWindow = (): void => {

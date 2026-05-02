@@ -28,6 +28,7 @@ import { AIController } from '../systems/AIController';
 import { HUD } from '../ui/HUD';
 import type { SpriteSet } from '../assets/SpriteSet';
 import { HitEffectsLayer } from '../systems/HitEffectsLayer';
+import { UltimateCinematic } from '../systems/UltimateCinematic';
 
 export type BattleMode = 'pvp' | 'pve';
 export type BattleResult =
@@ -70,6 +71,11 @@ export class BattleScene extends Scene {
   private timeLeftMS = ROUND_TIME_SECONDS * 1000;
   private ended = false;
   private endDelay = 90; // KO 后的展示时长（帧）
+
+  // 大招分镜演出（独立时间轴，期间冻结战斗）
+  private cinematic: UltimateCinematic | null = null;
+  private cinematicAttackerId: 'P1' | 'P2' | null = null;
+  private cinematicDamageDealt = false;
 
   constructor(opts: BattleSceneOptions) {
     super();
@@ -203,6 +209,29 @@ export class BattleScene extends Scene {
       this.timeLeftMS -= deltaMS;
     }
 
+    // === 大招分镜：独立时间轴，期间不推进战斗也不接受输入 ===
+    if (this.cinematic) {
+      this.cinematic.update();
+      // 在分镜中段（约 60% 进度）应用大招伤害一次
+      if (!this.cinematicDamageDealt && this.cinematic.isDone()) {
+        this.applyUltimateImpact();
+        this.cinematicDamageDealt = true;
+      }
+      if (this.cinematic.isDone()) {
+        this.removeChild(this.cinematic);
+        this.cinematic.destroy({ children: true });
+        this.cinematic = null;
+        this.cinematicAttackerId = null;
+        this.cinematicDamageDealt = false;
+      }
+      this.hud.update(this.timeLeftMS / 1000);
+      this.aiInput?.endFrame();
+      return;
+    }
+
+    // 检测大招触发（attack.kind === 'ultimate' 且 frame=1，意味着新触发）
+    this.checkUltimateTrigger();
+
     // === 输入决策（AI）===
     if (this.aiController && this.aiInput) {
       this.aiController.update(this.projectiles);
@@ -292,6 +321,62 @@ export class BattleScene extends Scene {
       if (this.endDelay <= 0) {
         this.fireEnd();
       }
+    }
+  }
+
+  /** 检测大招触发：在 fighter 进入 ultimate attack 的第一帧启动 cinematic */
+  private checkUltimateTrigger(): void {
+    if (this.cinematic) return;
+    for (const f of [this.p1, this.p2]) {
+      if (f.consumeUltimateTrigger()) {
+        this.startCinematic(f.id);
+        return;
+      }
+    }
+  }
+
+  private startCinematic(attackerId: 'P1' | 'P2'): void {
+    if (!this.vfxSprites) return;
+    const attacker = attackerId === 'P1' ? this.p1 : this.p2;
+    const spec = attacker.preset.name === 'ALTMAN' ? 'altman' : 'dario';
+    this.cinematic = new UltimateCinematic(this.vfxSprites, spec);
+    this.cinematicAttackerId = attackerId;
+    this.cinematicDamageDealt = false;
+    // cinematic 加在 overlayLayer 之上，HUD 之下
+    this.addChildAt(this.cinematic, this.children.indexOf(this.hud));
+    // cinematic 接管，cancel attacker 的 ultimate 状态
+    attacker.cancelAttack();
+  }
+
+  /** 大招完成时一次性应用伤害与击退 */
+  private applyUltimateImpact(): void {
+    if (!this.cinematicAttackerId) return;
+    const target = this.cinematicAttackerId === 'P1' ? this.p2 : this.p1;
+    if (!target.isAlive()) return;
+    const attacker = this.cinematicAttackerId === 'P1' ? this.p1 : this.p2;
+    const result = target.takeHit({
+      damage: 300,
+      knockback: 120,
+      hitstopFrames: 12,
+      hitstunFrames: 60,
+      fromDirection: attacker.x < target.x ? 1 : -1,
+      energyOnHit: 0,
+      isUltimate: true,
+    });
+    this.screenEffects.shake(12, 18);
+    this.screenEffects.flashScreen();
+    if (this.hitEffects) {
+      const events: CombatEvent[] = [
+        {
+          attackerId: this.cinematicAttackerId,
+          targetId: target.id,
+          kind: 'ultimate',
+          blocked: result.blocked,
+          damage: result.dealt,
+        },
+      ];
+      const hitPoints = new Map([[target.id, { x: target.x, y: target.y - 130 }]]);
+      this.hitEffects.ingest(events, hitPoints);
     }
   }
 
