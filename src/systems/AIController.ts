@@ -32,8 +32,8 @@ export class AIController {
     const dist = Math.abs(dx);
     const facingRight = dx > 0;
 
-    // === 优先级 1：能量满，立刻大招 ===
-    if (this.self.energy >= MAX_ENERGY) {
+    // === 优先级 1：能量满 + 距离合适 + 50% 几率，放大招 ===
+    if (this.self.energy >= MAX_ENERGY && dist < 600 && Math.random() < 0.6) {
       this.input.press('ultimate');
       return;
     }
@@ -65,38 +65,39 @@ export class AIController {
       this.input.hold(facingRight ? 'left' : 'right');
     }
 
-    // 主动出招（受 nextAttackTimer 限速）
+    // 主动出招（受 nextAttackTimer 限速；间隔放宽让玩家有反击空间）
     if (this.nextAttackTimer <= 0) {
       if (dist < 160) {
         const r = Math.random();
-        if (r < 0.55) this.input.press('jab');
-        else if (r < 0.8) this.input.press('combo2');
-        this.nextAttackTimer = 24 + Math.floor(Math.random() * 30);
+        if (r < 0.4) this.input.press('jab');
+        else if (r < 0.55) this.input.press('combo2');
+        this.nextAttackTimer = 50 + Math.floor(Math.random() * 50);
       } else if (dist > 250 && dist < 700) {
-        if (Math.random() < 0.6) {
+        if (Math.random() < 0.45) {
           this.input.press('combo1');
         }
-        this.nextAttackTimer = 60 + Math.floor(Math.random() * 60);
+        this.nextAttackTimer = 90 + Math.floor(Math.random() * 60);
       } else {
-        this.nextAttackTimer = 12;
+        this.nextAttackTimer = 30;
       }
     }
   }
 
   private pickState(dist: number): void {
-    this.stateTimer = 30 + Math.floor(Math.random() * 40);
+    this.stateTimer = 45 + Math.floor(Math.random() * 50); // 决策周期更长，节奏更慢
     if (dist > 500) {
-      this.state = 'approach';
+      // 远距离仍以接近为主，但会观察更久
+      this.state = Math.random() < 0.7 ? 'approach' : 'wait';
       return;
     }
-    if (dist < 120) {
-      // 太近偶尔后退拉开拳脚距离
-      this.state = Math.random() < 0.4 ? 'retreat' : 'wait';
+    if (dist < 130) {
+      // 太近经常后退拉开距离，避免一直贴脸压死玩家
+      this.state = Math.random() < 0.55 ? 'retreat' : 'wait';
       return;
     }
     const r = Math.random();
-    if (r < 0.6) this.state = 'approach';
-    else if (r < 0.85) this.state = 'wait';
+    if (r < 0.4) this.state = 'approach';
+    else if (r < 0.75) this.state = 'wait';
     else this.state = 'retreat';
   }
 }

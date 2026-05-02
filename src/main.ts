@@ -81,6 +81,7 @@ import { VFX_FRAMES } from './assets/vfxFrames';
       new ResultScene({
         input,
         result,
+        sprites: { altman: altmanSprites, dario: darioSprites, bgArena },
         onContinue: () => showMenu(),
       })
     );
