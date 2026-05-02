@@ -75,6 +75,7 @@ export class Fighter extends Container {
   private flashFrames = 0;
   private sprite!: Sprite;
   private spriteSet: SpriteSet | null = null;
+  private spriteBaseScale = 1; // setSpriteSet 时根据 sprite 高度算出，是 idle/walk 节奏的基准
   private elapsedFrames = 0;
 
   // 输出给场景
@@ -134,6 +135,7 @@ export class Fighter extends Container {
     // 按显示高度计算缩放（sprite 1024 像素中角色实际占约 800 像素，预留外边距）
     const tex = spriteSet.get('idle_01');
     const scale = SPRITE_DISPLAY_HEIGHT / tex.height * 1.2; // 1.2 系数补回 sprite 周围空白
+    this.spriteBaseScale = scale;
     this.sprite.scale.set(scale);
     this.sprite.texture = tex;
     this.applySpriteFacing();
@@ -192,13 +194,41 @@ export class Fighter extends Container {
       this.sprite.tint = 0xffffff;
     }
 
-    // idle 呼吸 bob：脚锚不变，整体在脚踝以上做 ±1.5px 的慢正弦浮动
-    // 周期 90 帧 ≈ 1.5 秒，模拟轻呼吸/重心微换。
-    // 其他状态强制归零，避免行进/出招时跟动画叠加抖动。
+    this.applySpriteRhythm();
+  }
+
+  /**
+   * 给单帧 pose 加上"运动节奏"，避免静态 sprite 看起来僵死。
+   *
+   * 锚点是 (0.5, 1)（脚底），所以 scale.y 变化会让人体上半像呼吸一样
+   * "压扁/拉长"，同时保持脚位置不变（不再像之前 sprite.y 浮动那样
+   * 整体离地"超人飞行"）。scale.x 不动以避开 facing flip 的 sign 冲突。
+   *
+   * - idle：周期 90 帧（1.5s）的 scale.y squash/stretch 微动，脚不动
+   * - walk：每 16 帧一段（约一只脚抬→落的半 cycle），段内做 sin 弧形
+   *   vertical bounce（脚抬起最高 -2px），同时 walk 切帧也是每 16 帧切，
+   *   两者节奏对齐，避免之前 8 帧瞬切两张姿态完全不同的 walk 帧的
+   *   "传送感"
+   * - 其他 state（攻击 / 受击 / 防御 / win/lose / 跳跃）维持基础 scale，
+   *   不叠加节奏，避免与动作动画打架
+   */
+  private applySpriteRhythm(): void {
+    const base = this.spriteBaseScale;
+    const t = this.elapsedFrames;
+
     if (this.state === 'idle') {
-      const phase = (this.elapsedFrames * 2 * Math.PI) / 90;
-      this.sprite.y = -((1 - Math.cos(phase)) * 1.5); // [-3, 0] 缓慢抬落
-    } else if (this.sprite.y !== 0) {
+      // 呼吸 squash/stretch：scale.y 在 [base*0.985, base*1.015] 摆动
+      const breath = Math.sin((t * 2 * Math.PI) / 90);
+      this.sprite.scale.y = base * (1 + breath * 0.015);
+      this.sprite.y = 0;
+    } else if (this.state === 'walk') {
+      // 走路弧形 bounce：每 16 帧一段，sin 0→1→0 让脚跨步时浮起再落地
+      const segPhase = ((t % 16) / 16) * Math.PI;
+      const lift = Math.sin(segPhase) * 2; // 最高抬起 2px
+      this.sprite.y = -lift;
+      this.sprite.scale.y = base;
+    } else {
+      this.sprite.scale.y = base;
       this.sprite.y = 0;
     }
   }
@@ -226,8 +256,10 @@ export class Fighter extends Container {
     }
 
     if (this.state === 'walk') {
-      // 8 帧切换一次（120ms @60fps），双帧循环
-      return Math.floor(this.elapsedFrames / 8) % 2 === 0 ? 'walk_01' : 'walk_02';
+      // 16 帧切一次（约 0.27 秒一只脚跨步的半 cycle），跟 vertical bounce
+      // 节奏对齐：bounce 抬起最高点恰好是切到下一帧的瞬间，让"瞬切"被
+      // 节奏掩盖，看起来像换腿而不是传送
+      return Math.floor(this.elapsedFrames / 16) % 2 === 0 ? 'walk_01' : 'walk_02';
     }
 
     // 街机 idle 默认是双拳举起的战斗预备 stance（idle_01）。
