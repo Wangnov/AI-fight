@@ -183,8 +183,24 @@ export class Fighter extends Container {
     const key = this.pickFrameKey();
     this.sprite.texture = this.spriteSet.get(key);
     this.applySpriteFacing();
-    // 受击时短暂闪白：tint 调成偏白红
-    this.sprite.tint = this.flashFrames > 0 ? 0xffaaaa : 0xffffff;
+    // tint 决策：受击优先（偏粉红），否则防御态偏蓝，再否则原色
+    if (this.flashFrames > 0) {
+      this.sprite.tint = 0xffaaaa;
+    } else if (this.state === 'block') {
+      this.sprite.tint = 0x88aaff;
+    } else {
+      this.sprite.tint = 0xffffff;
+    }
+
+    // idle 呼吸 bob：脚锚不变，整体在脚踝以上做 ±1.5px 的慢正弦浮动
+    // 周期 90 帧 ≈ 1.5 秒，模拟轻呼吸/重心微换。
+    // 其他状态强制归零，避免行进/出招时跟动画叠加抖动。
+    if (this.state === 'idle') {
+      const phase = (this.elapsedFrames * 2 * Math.PI) / 90;
+      this.sprite.y = -((1 - Math.cos(phase)) * 1.5); // [-3, 0] 缓慢抬落
+    } else if (this.sprite.y !== 0) {
+      this.sprite.y = 0;
+    }
   }
 
   private pickFrameKey(): FrameKey {
@@ -214,12 +230,11 @@ export class Fighter extends Container {
       return Math.floor(this.elapsedFrames / 8) % 2 === 0 ? 'walk_01' : 'walk_02';
     }
 
-    if (this.state === 'jump') return 'idle_02';
-    if (this.state === 'crouch') return 'idle_02';
-    if (this.state === 'block') return 'idle_01';
-
-    // idle：呼吸 30 帧切一次
-    return Math.floor(this.elapsedFrames / 30) % 2 === 0 ? 'idle_01' : 'idle_02';
+    // 街机 idle 默认是双拳举起的战斗预备 stance（idle_01）。
+    // idle_02（手垂下放松站姿）目前不直接挂哪个 state，留作未来
+    // between-rounds / 入场展示等场景。block / jump / crouch 暂用同一
+    // idle_01 stance，靠 tint / 后续专门帧区分。
+    return 'idle_01';
   }
 
   private applySpriteFacing(): void {
