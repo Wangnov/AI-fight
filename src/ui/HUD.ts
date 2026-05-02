@@ -100,38 +100,62 @@ export class HUD extends Container {
     p2Name.y = HUD_TOP - 22;
     this.addChild(p2Name);
 
+    // HP 数字嵌入血条内部、远离屏幕中央那一侧，避免和计时器重叠
     this.p1HpText = new Text({
       text: '',
-      style: { fontFamily: 'system-ui', fontSize: 13, fill: 0xffffff },
+      style: {
+        fontFamily: 'system-ui',
+        fontSize: 13,
+        fill: 0xffffff,
+        fontWeight: 'bold',
+      },
     });
-    this.p1HpText.x = 40 + HP_BAR_WIDTH + 8;
-    this.p1HpText.y = HUD_TOP + 6;
+    this.p1HpText.anchor.set(0, 0.5);
+    this.p1HpText.x = 48;
+    this.p1HpText.y = HUD_TOP + HP_BAR_HEIGHT / 2;
     this.addChild(this.p1HpText);
 
     this.p2HpText = new Text({
       text: '',
-      style: { fontFamily: 'system-ui', fontSize: 13, fill: 0xffffff },
+      style: {
+        fontFamily: 'system-ui',
+        fontSize: 13,
+        fill: 0xffffff,
+        fontWeight: 'bold',
+      },
     });
-    this.p2HpText.anchor.set(1, 0);
-    this.p2HpText.x = STAGE_WIDTH - 40 - HP_BAR_WIDTH - 8;
-    this.p2HpText.y = HUD_TOP + 6;
+    this.p2HpText.anchor.set(1, 0.5);
+    this.p2HpText.x = STAGE_WIDTH - 48;
+    this.p2HpText.y = HUD_TOP + HP_BAR_HEIGHT / 2;
     this.addChild(this.p2HpText);
 
+    // 能量条数字也嵌入条内
     this.p1EnergyText = new Text({
       text: '',
-      style: { fontFamily: 'system-ui', fontSize: 11, fill: 0xffffff },
+      style: {
+        fontFamily: 'system-ui',
+        fontSize: 10,
+        fill: 0xffffff,
+        fontWeight: 'bold',
+      },
     });
-    this.p1EnergyText.x = 40 + ENERGY_BAR_WIDTH + 8;
-    this.p1EnergyText.y = HUD_TOP + HP_BAR_HEIGHT + 8;
+    this.p1EnergyText.anchor.set(0, 0.5);
+    this.p1EnergyText.x = 48;
+    this.p1EnergyText.y = HUD_TOP + HP_BAR_HEIGHT + 10 + ENERGY_BAR_HEIGHT / 2;
     this.addChild(this.p1EnergyText);
 
     this.p2EnergyText = new Text({
       text: '',
-      style: { fontFamily: 'system-ui', fontSize: 11, fill: 0xffffff },
+      style: {
+        fontFamily: 'system-ui',
+        fontSize: 10,
+        fill: 0xffffff,
+        fontWeight: 'bold',
+      },
     });
-    this.p2EnergyText.anchor.set(1, 0);
-    this.p2EnergyText.x = STAGE_WIDTH - 40 - ENERGY_BAR_WIDTH - 8;
-    this.p2EnergyText.y = HUD_TOP + HP_BAR_HEIGHT + 8;
+    this.p2EnergyText.anchor.set(1, 0.5);
+    this.p2EnergyText.x = STAGE_WIDTH - 48;
+    this.p2EnergyText.y = HUD_TOP + HP_BAR_HEIGHT + 10 + ENERGY_BAR_HEIGHT / 2;
     this.addChild(this.p2EnergyText);
 
     this.timerText = new Text({
