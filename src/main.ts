@@ -26,6 +26,17 @@ import { ResultScene } from './scenes/ResultScene';
   if (!mountPoint) throw new Error('#app element missing');
   mountPoint.appendChild(app.canvas);
 
+  // 画布自适应：窗口窄于 1280×720 时整体等比缩放，宽于则放大
+  const fitToWindow = (): void => {
+    const scale = Math.min(
+      window.innerWidth / STAGE_WIDTH,
+      window.innerHeight / STAGE_HEIGHT
+    );
+    mountPoint.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  };
+  fitToWindow();
+  window.addEventListener('resize', fitToWindow);
+
   const input = new InputManager();
   input.attach();
 
