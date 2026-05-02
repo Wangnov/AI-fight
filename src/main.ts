@@ -9,6 +9,8 @@ import { InputManager } from './input/InputManager';
 import { BattleScene, type BattleMode, type BattleResult } from './scenes/BattleScene';
 import { MenuScene } from './scenes/MenuScene';
 import { ResultScene } from './scenes/ResultScene';
+import { SpriteSet } from './assets/SpriteSet';
+import { ALTMAN_FRAMES, DARIO_FRAMES } from './assets/spriteFrames';
 
 (async () => {
   const app = new Application();
@@ -42,6 +44,12 @@ import { ResultScene } from './scenes/ResultScene';
 
   const manager = new SceneManager(app.stage);
 
+  // 启动期一次性异步加载两套 sprite，加载完才进入菜单
+  const [altmanSprites, darioSprites] = await Promise.all([
+    SpriteSet.load(ALTMAN_FRAMES),
+    SpriteSet.load(DARIO_FRAMES),
+  ]);
+
   const showMenu = (): void => {
     manager.switchTo(
       new MenuScene({
@@ -56,6 +64,7 @@ import { ResultScene } from './scenes/ResultScene';
       new BattleScene({
         input,
         mode,
+        sprites: { altman: altmanSprites, dario: darioSprites },
         onEnd: (result) => showResult(result),
       })
     );

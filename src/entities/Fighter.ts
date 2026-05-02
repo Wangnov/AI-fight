@@ -1,4 +1,4 @@
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Graphics, Sprite, Text } from 'pixi.js';
 import {
   ATTACK_COMBO_2,
   ATTACK_JAB,
@@ -23,6 +23,10 @@ import {
 import type { InputProvider } from '../input/InputProvider';
 import { Projectile } from './Projectile';
 import type { AABB, AttackKind, FighterId } from '../types';
+import type { SpriteSet } from '../assets/SpriteSet';
+import type { FrameKey } from '../assets/spriteFrames';
+
+const SPRITE_DISPLAY_HEIGHT = 380; // 角色 sprite 显示高度（视觉略大于 FIGHTER_HEIGHT 的 hurtbox）
 
 export type FighterState =
   | 'idle'
@@ -69,6 +73,9 @@ export class Fighter extends Container {
   private body!: Graphics;
   private faceMarker!: Graphics;
   private flashFrames = 0;
+  private sprite!: Sprite;
+  private spriteSet: SpriteSet | null = null;
+  private elapsedFrames = 0;
 
   // 输出给场景
   pendingProjectiles: Projectile[] = [];
@@ -92,8 +99,12 @@ export class Fighter extends Container {
   private buildVisual(): void {
     this.body = new Graphics();
     this.faceMarker = new Graphics();
+    this.sprite = new Sprite();
+    this.sprite.anchor.set(0.5, 1); // 锚点底部中心，对齐角色脚底
+    this.sprite.visible = false;
     this.addChild(this.body);
     this.addChild(this.faceMarker);
+    this.addChild(this.sprite);
 
     // 名字标签
     const label = new Text({
@@ -107,13 +118,34 @@ export class Fighter extends Container {
     });
     label.anchor.set(0.5, 1);
     label.x = 0;
-    label.y = -FIGHTER_HEIGHT - 8;
+    label.y = -SPRITE_DISPLAY_HEIGHT - 8;
     this.addChild(label);
 
     this.redraw();
   }
 
+  /** 接入 sprite，隐藏占位矩形与朝向三角，启用基于状态的动画 */
+  setSpriteSet(spriteSet: SpriteSet): void {
+    this.spriteSet = spriteSet;
+    this.body.visible = false;
+    this.faceMarker.visible = false;
+    this.sprite.visible = true;
+
+    // 按显示高度计算缩放（sprite 1024 像素中角色实际占约 800 像素，预留外边距）
+    const tex = spriteSet.get('idle_01');
+    const scale = SPRITE_DISPLAY_HEIGHT / tex.height * 1.2; // 1.2 系数补回 sprite 周围空白
+    this.sprite.scale.set(scale);
+    this.sprite.texture = tex;
+    this.applySpriteFacing();
+  }
+
   private redraw(): void {
+    if (this.spriteSet) {
+      this.updateSpriteFrame();
+      return;
+    }
+
+    // === Fallback：未加载 sprite 时用占位矩形（开发期间或资产加载失败的兜底）===
     const h = this.state === 'crouch' ? FIGHTER_CROUCH_HEIGHT : FIGHTER_HEIGHT;
     const w = FIGHTER_WIDTH;
 
@@ -135,7 +167,6 @@ export class Fighter extends Container {
         .fill({ color: 0xffffff, alpha: 0.7 });
     }
 
-    // 朝向标记：在身体一侧画一个小三角
     this.faceMarker.clear();
     const fx = (w / 2) * this.facing;
     this.faceMarker
@@ -144,6 +175,60 @@ export class Fighter extends Container {
       .lineTo(fx, -h * 0.4)
       .closePath()
       .fill(0xffffff);
+  }
+
+  /** Sprite 模式：根据 state + elapsedFrames 选帧并应用镜像 */
+  private updateSpriteFrame(): void {
+    if (!this.spriteSet) return;
+    const key = this.pickFrameKey();
+    this.sprite.texture = this.spriteSet.get(key);
+    this.applySpriteFacing();
+    // 受击时短暂闪白：tint 调成偏白红
+    this.sprite.tint = this.flashFrames > 0 ? 0xffaaaa : 0xffffff;
+  }
+
+  private pickFrameKey(): FrameKey {
+    if (this.state === 'hit') return 'hit';
+    if (this.state === 'win') return 'win';
+    if (this.state === 'lose') return 'lose';
+
+    if (this.state === 'attack' && this.attack) {
+      const a = this.attack;
+      if (a.kind === 'jab') {
+        const startup = a.data.startup;
+        const active = a.data.active;
+        if (a.frame < startup) return 'jab_01';
+        if (a.frame < startup + active) return 'jab_02';
+        return 'jab_03';
+      }
+      // combo1 投射物：用蓄力姿势作占位
+      if (a.kind === 'combo1') return 'jab_01';
+      // combo2 近战重击：用出拳关键帧作占位
+      if (a.kind === 'combo2') return 'jab_02';
+      // ultimate：暂用出拳关键帧
+      if (a.kind === 'ultimate') return 'jab_02';
+    }
+
+    if (this.state === 'walk') {
+      // 8 帧切换一次（120ms @60fps），双帧循环
+      return Math.floor(this.elapsedFrames / 8) % 2 === 0 ? 'walk_01' : 'walk_02';
+    }
+
+    if (this.state === 'jump') return 'idle_02';
+    if (this.state === 'crouch') return 'idle_02';
+    if (this.state === 'block') return 'idle_01';
+
+    // idle：呼吸 30 帧切一次
+    return Math.floor(this.elapsedFrames / 30) % 2 === 0 ? 'idle_01' : 'idle_02';
+  }
+
+  private applySpriteFacing(): void {
+    // sprite 默认朝向取决于角色 preset：Altman 朝右、Dario 朝左
+    const naturalRight = this.preset.facingRight;
+    const wantRight = this.facing > 0;
+    const flip = wantRight !== naturalRight;
+    const absScale = Math.abs(this.sprite.scale.x);
+    this.sprite.scale.x = flip ? -absScale : absScale;
   }
 
   setInput(input: InputProvider): void {
@@ -165,6 +250,9 @@ export class Fighter extends Container {
       this.redraw();
       return;
     }
+
+    // 仅在非冻结时推进动画时钟
+    this.elapsedFrames += 1;
 
     // 自动朝向对手
     if (this.opponent && this.state !== 'hit' && this.state !== 'attack') {

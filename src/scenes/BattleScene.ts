@@ -26,6 +26,7 @@ import { CombatSystem } from '../systems/CombatSystem';
 import { ScreenEffects } from '../systems/ScreenEffects';
 import { AIController } from '../systems/AIController';
 import { HUD } from '../ui/HUD';
+import type { SpriteSet } from '../assets/SpriteSet';
 
 export type BattleMode = 'pvp' | 'pve';
 export type BattleResult =
@@ -35,6 +36,7 @@ export type BattleResult =
 export interface BattleSceneOptions {
   input: InputManager;
   mode: BattleMode;
+  sprites?: { altman: SpriteSet; dario: SpriteSet };
   onEnd: (result: BattleResult) => void;
 }
 
@@ -110,6 +112,10 @@ export class BattleScene extends Scene {
     this.p2 = new Fighter('P2', PRESET_DARIO, SPAWN_X_P2);
     this.p1.setOpponent(this.p2);
     this.p2.setOpponent(this.p1);
+    if (opts.sprites) {
+      this.p1.setSpriteSet(opts.sprites.altman);
+      this.p2.setSpriteSet(opts.sprites.dario);
+    }
     this.fightersLayer.addChild(this.p1);
     this.fightersLayer.addChild(this.p2);
 
