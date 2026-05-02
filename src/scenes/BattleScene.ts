@@ -1,5 +1,6 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import {
+  FIGHTER_WIDTH,
   FLOOR_COLOR,
   GROUND_Y,
   KEYS_P1,
@@ -175,6 +176,9 @@ export class BattleScene extends Scene {
     this.p1.update();
     this.p2.update();
 
+    // === 解决双方在地面时的 x 重叠（防穿模）===
+    this.resolveFighterOverlap();
+
     // === 收集新生成的投射物 ===
     for (const p of this.p1.consumePendingProjectiles()) {
       this.projectiles.push(p);
@@ -242,6 +246,50 @@ export class BattleScene extends Scene {
       if (this.endDelay <= 0) {
         this.fireEnd();
       }
+    }
+  }
+
+  /**
+   * 防止两个角色穿模：双方都在地面时，强制保证两个中心相距至少一个角色宽度。
+   * 各推一半重叠量；若一方贴墙被 clamp 卡住，剩余偏移全部转给对方，避免边角处仍然重叠。
+   * 跳跃中的角色允许穿过，符合格斗游戏惯例。
+   */
+  private resolveFighterOverlap(): void {
+    const p1OnGround = this.p1.y >= GROUND_Y;
+    const p2OnGround = this.p2.y >= GROUND_Y;
+    if (!p1OnGround || !p2OnGround) return;
+
+    const dx = this.p2.x - this.p1.x;
+    const minSeparation = FIGHTER_WIDTH;
+    const absDx = Math.abs(dx);
+    if (absDx >= minSeparation) return;
+
+    const overlap = minSeparation - absDx;
+    const sign = dx >= 0 ? 1 : -1;
+    const half = overlap / 2;
+    const halfW = FIGHTER_WIDTH / 2;
+    const minX = halfW;
+    const maxX = STAGE_WIDTH - halfW;
+
+    const clamp = (v: number): number => Math.min(maxX, Math.max(minX, v));
+    const targetP1 = clamp(this.p1.x - sign * half);
+    const targetP2 = clamp(this.p2.x + sign * half);
+    const p1Used = Math.abs(this.p1.x - targetP1);
+    const p2Used = Math.abs(this.p2.x - targetP2);
+
+    if (p1Used + p2Used + 0.5 >= overlap) {
+      this.p1.x = targetP1;
+      this.p2.x = targetP2;
+      return;
+    }
+
+    // 一方被墙挡住，把剩余偏移甩给另一方
+    if (p1Used < half) {
+      this.p1.x = targetP1;
+      this.p2.x = clamp(this.p2.x + sign * (overlap - p1Used));
+    } else {
+      this.p2.x = targetP2;
+      this.p1.x = clamp(this.p1.x - sign * (overlap - p2Used));
     }
   }
 
