@@ -10,3 +10,8 @@ dist
 .idea
 .vscode
 public/sprites/*/_raw_*.png
+
+# pose detection 工具相关（运行时下载，不入库）
+tools/_pose/models/
+tools/__pycache__/
+
