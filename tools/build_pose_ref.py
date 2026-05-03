@@ -22,7 +22,7 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).parent))
 from walk_skeleton import (
-    get_walk_cycle, get_jab_sequence, get_combo2_sequence,
+    get_walk_cycle, get_jab_sequence, get_combo2_sequence, get_combo1_sequence,
     render_frame, CELL_W, CELL_H, JOINT_COLORS, SKELETON_LINES,
 )
 
@@ -36,9 +36,9 @@ def render_single_skeleton(frame_kp: dict, out: Path) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--base', required=True)
-    ap.add_argument('--action', default='walk', choices=['walk', 'jab', 'combo2'])
-    ap.add_argument('--skel-frame', type=int, required=True,
-                     help='walk: 1..8; jab: 1..3; combo2: 1..2')
+    ap.add_argument('--action', default='walk',
+                     choices=['walk', 'jab', 'combo1', 'combo2'])
+    ap.add_argument('--skel-frame', type=int, required=True)
     ap.add_argument('--char', required=True, choices=['altman', 'dario'])
     ap.add_argument('--out', required=True)
     args = ap.parse_args()
@@ -50,6 +50,9 @@ def main() -> None:
     elif args.action == 'jab':
         cycle = get_jab_sequence(facing)
         max_frame = 3
+    elif args.action == 'combo1':
+        cycle = get_combo1_sequence(facing)
+        max_frame = 2
     else:
         cycle = get_combo2_sequence(facing)
         max_frame = 2

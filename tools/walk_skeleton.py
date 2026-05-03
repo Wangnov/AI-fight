@@ -314,6 +314,63 @@ def get_combo2_sequence(facing: str = 'right') -> list[dict[str, KP]]:
     return base
 
 
+# === Combo1 2 帧（投射物 cast → throw）===
+# cast: 召唤姿势，双手前伸在身前形成"持物"姿态
+# throw: 双手大幅前推释放投射物，身体前倾跟随
+
+def _frame_combo1_cast() -> dict[str, KP]:
+    """召唤——双手在身前胸高位置，掌心朝前形成"持物" stance。"""
+    return {
+        'head':       KP(x=510, y=130),
+        'neck':       KP(x=515, y=220),
+        'l_shoulder': KP(x=505, y=230),
+        'r_shoulder': KP(x=525, y=230),
+        'l_elbow':    KP(x=485, y=355),
+        'r_elbow':    KP(x=545, y=355),  # 双肘内收前伸
+        'l_wrist':    KP(x=510, y=455),  # 双拳到胸前
+        'r_wrist':    KP(x=565, y=455),
+        'hip_center': KP(x=515, y=605),
+        'l_hip':      KP(x=505, y=605),
+        'r_hip':      KP(x=525, y=605),
+        'l_knee':     KP(x=485, y=775),
+        'r_knee':     KP(x=545, y=775),
+        'l_ankle':    KP(x=465, y=945),
+        'r_ankle':    KP(x=570, y=945),
+    }
+
+
+def _frame_combo1_throw() -> dict[str, KP]:
+    """投出——双手大幅前推释放投射物，身体前倾，后脚撑地。"""
+    return {
+        'head':       KP(x=530, y=115),  # 前倾
+        'neck':       KP(x=525, y=215),
+        'l_shoulder': KP(x=510, y=220),
+        'r_shoulder': KP(x=540, y=215),
+        'l_elbow':    KP(x=590, y=320),
+        'r_elbow':    KP(x=620, y=280),
+        'l_wrist':    KP(x=695, y=400),  # 左手前推（略低）
+        'r_wrist':    KP(x=770, y=275),  # 右手前推（略高，主推手）
+        'hip_center': KP(x=515, y=600),
+        'l_hip':      KP(x=505, y=600),
+        'r_hip':      KP(x=525, y=600),
+        'l_knee':     KP(x=475, y=775),
+        'r_knee':     KP(x=575, y=770),
+        'l_ankle':    KP(x=440, y=945),  # 后脚撑
+        'r_ankle':    KP(x=620, y=945),  # 前脚踩
+    }
+
+
+def get_combo1_sequence(facing: str = 'right') -> list[dict[str, KP]]:
+    base = [_frame_combo1_cast(), _frame_combo1_throw()]
+    if facing == 'left':
+        out = []
+        for f in base:
+            mirrored = {k: KP(x=2 * CENTER_X - v['x'], y=v['y']) for k, v in f.items()}
+            out.append(mirrored)
+        return out
+    return base
+
+
 def get_walk_cycle(facing: str = 'right') -> list[dict[str, KP]]:
     """返回 8 帧 walk cycle，按 walk_01..08 顺序。
     facing='right' 默认设计；'left' 对所有 x 关于 CENTER_X 翻转（维持 left/right 标签为解剖学含义）。"""
