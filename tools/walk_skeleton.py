@@ -257,6 +257,63 @@ def get_jab_sequence(facing: str = 'right') -> list[dict[str, KP]]:
     return base
 
 
+# === Combo2 2 帧（重击 / 上勾拳）===
+# windup: 深蹲蓄力，重心下沉，右拳收在低位准备从下挥起
+# swing:  站起伸直，身体后仰跟随 momentum，右拳完全挥出到头部上方
+
+def _frame_combo2_windup() -> dict[str, KP]:
+    """蓄力下蹲——hip 大幅下沉，膝大弯，右拳收在低位准备 uppercut。"""
+    return {
+        'head':       KP(x=510, y=180),  # 显著低头蓄力
+        'neck':       KP(x=510, y=280),
+        'l_shoulder': KP(x=500, y=290),
+        'r_shoulder': KP(x=520, y=285),
+        'l_elbow':    KP(x=465, y=425),
+        'r_elbow':    KP(x=560, y=435),  # 右肘大弯曲
+        'l_wrist':    KP(x=465, y=545),
+        'r_wrist':    KP(x=595, y=590),  # 右拳深低位（uppercut 起点）
+        'hip_center': KP(x=515, y=660),  # 显著下沉
+        'l_hip':      KP(x=505, y=660),
+        'r_hip':      KP(x=525, y=660),
+        'l_knee':     KP(x=465, y=800),  # 大弯
+        'r_knee':     KP(x=565, y=800),
+        'l_ankle':    KP(x=445, y=945),
+        'r_ankle':    KP(x=585, y=945),
+    }
+
+
+def _frame_combo2_swing() -> dict[str, KP]:
+    """全力上勾——身体伸直站高，右拳从下完全挥到头部上方/前方。"""
+    return {
+        'head':       KP(x=520, y=80),   # 最高 + 略后仰
+        'neck':       KP(x=515, y=200),
+        'l_shoulder': KP(x=500, y=215),
+        'r_shoulder': KP(x=530, y=200),
+        'l_elbow':    KP(x=465, y=355),
+        'r_elbow':    KP(x=575, y=255),  # 右肘举高
+        'l_wrist':    KP(x=485, y=465),  # 左拳护胸
+        'r_wrist':    KP(x=620, y=90),   # 右拳完全挥到顶（uppercut 高点）
+        'hip_center': KP(x=515, y=585),
+        'l_hip':      KP(x=505, y=585),
+        'r_hip':      KP(x=525, y=585),
+        'l_knee':     KP(x=490, y=765),  # 几乎伸直
+        'r_knee':     KP(x=535, y=765),
+        'l_ankle':    KP(x=470, y=945),
+        'r_ankle':    KP(x=575, y=945),
+    }
+
+
+def get_combo2_sequence(facing: str = 'right') -> list[dict[str, KP]]:
+    base = [_frame_combo2_windup(), _frame_combo2_swing()]
+    if facing == 'left':
+        out = []
+        for f in base:
+            mirrored = {k: KP(x=2 * CENTER_X - v['x'], y=v['y']) for k, v in f.items()}
+            out.append(mirrored)
+        return out
+    return base
+
+
 def get_walk_cycle(facing: str = 'right') -> list[dict[str, KP]]:
     """返回 8 帧 walk cycle，按 walk_01..08 顺序。
     facing='right' 默认设计；'left' 对所有 x 关于 CENTER_X 翻转（维持 left/right 标签为解剖学含义）。"""
