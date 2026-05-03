@@ -89,23 +89,24 @@ def _frame_contact_l() -> dict[str, KP]:
 
 
 def _frame_down_l() -> dict[str, KP]:
-    """左脚承重弯曲(在前)，hip 最低。右脚抬起后摆(已开始 swing forward)。"""
+    """左脚承重深蹲(在前)，hip 显著最低（- 100px from contact）。右脚抬起后摆。
+    DEEP SQUAT pose — 整个上半身向下压，膝盖大幅弯曲。"""
     return {
-        'head':       KP(x=525, y=145),  # 最低 + 前倾
-        'neck':       KP(x=518, y=245),
-        'l_shoulder': KP(x=515, y=250),
-        'r_shoulder': KP(x=520, y=250),
-        'l_elbow':    KP(x=425, y=395),
-        'r_elbow':    KP(x=615, y=370),
-        'l_wrist':    KP(x=385, y=505),
-        'r_wrist':    KP(x=695, y=320),
-        'hip_center': KP(x=515, y=640),  # 最低
-        'l_hip':      KP(x=510, y=640),
-        'r_hip':      KP(x=520, y=640),
-        'l_knee':     KP(x=560, y=820),  # 左膝弯曲承重，仍偏前
-        'r_knee':     KP(x=480, y=750),  # 右脚抬起，膝弯，仍后但开始上来
-        'l_ankle':    KP(x=580, y=945),  # 左脚平踩地
-        'r_ankle':    KP(x=460, y=860),  # 右脚离地后摆
+        'head':       KP(x=535, y=220),  # 明显低头 + 前倾（hip 下沉 100 → head 跟着下沉）
+        'neck':       KP(x=525, y=320),  # neck 也下沉
+        'l_shoulder': KP(x=515, y=335),
+        'r_shoulder': KP(x=525, y=325),
+        'l_elbow':    KP(x=425, y=460),
+        'r_elbow':    KP(x=615, y=435),
+        'l_wrist':    KP(x=385, y=560),
+        'r_wrist':    KP(x=695, y=380),
+        'hip_center': KP(x=515, y=720),  # 大幅下沉 (从 600 → 720, +120)
+        'l_hip':      KP(x=510, y=720),
+        'r_hip':      KP(x=520, y=720),
+        'l_knee':     KP(x=580, y=860),  # 左膝大弯，膝盖前伸（深蹲）
+        'r_knee':     KP(x=470, y=820),  # 右脚抬起
+        'l_ankle':    KP(x=585, y=945),  # 左脚平踩
+        'r_ankle':    KP(x=440, y=890),  # 右脚抬离地
     }
 
 
@@ -131,23 +132,24 @@ def _frame_passing_l() -> dict[str, KP]:
 
 
 def _frame_up_l() -> dict[str, KP]:
-    """支撑腿(左)伸直推高，hip 最高。右腿已摆到前方。手臂反向：左臂前/右臂后。"""
+    """左腿(支撑)完全伸直推高，hip 显著最高（- 80px from contact）。
+    TALL STRIDE pose — 站起到最高，前腿伸出最远，后腿脚跟离地踮起。"""
     return {
-        'head':       KP(x=510, y=85),   # 最高 + 略后仰
-        'neck':       KP(x=510, y=195),
-        'l_shoulder': KP(x=505, y=210),
-        'r_shoulder': KP(x=515, y=210),
-        'l_elbow':    KP(x=590, y=350),  # 左臂前（反转）
-        'r_elbow':    KP(x=425, y=375),  # 右臂后
-        'l_wrist':    KP(x=655, y=295),
-        'r_wrist':    KP(x=380, y=475),
-        'hip_center': KP(x=510, y=560),  # 最高
-        'l_hip':      KP(x=505, y=560),
-        'r_hip':      KP(x=515, y=560),
-        'l_knee':     KP(x=515, y=760),  # 左腿完全伸直
-        'r_knee':     KP(x=600, y=720),  # 右腿摆到前
-        'l_ankle':    KP(x=520, y=945),  # 左脚跟开始抬
-        'r_ankle':    KP(x=680, y=895),  # 右脚摆到前
+        'head':       KP(x=510, y=20),   # 最高（从 110 → 20, -90px）
+        'neck':       KP(x=510, y=130),  # neck 也高
+        'l_shoulder': KP(x=505, y=145),
+        'r_shoulder': KP(x=515, y=140),
+        'l_elbow':    KP(x=590, y=290),  # 左臂前（反转）
+        'r_elbow':    KP(x=425, y=315),
+        'l_wrist':    KP(x=665, y=235),
+        'r_wrist':    KP(x=380, y=415),
+        'hip_center': KP(x=510, y=520),  # 显著最高 (从 600 → 520, -80)
+        'l_hip':      KP(x=505, y=520),
+        'r_hip':      KP(x=515, y=520),
+        'l_knee':     KP(x=510, y=730),  # 左腿完全伸直推高
+        'r_knee':     KP(x=620, y=680),  # 右腿摆到前 + 高
+        'l_ankle':    KP(x=510, y=905),  # 左脚跟离地踮起 (y=905 而非 945)
+        'r_ankle':    KP(x=695, y=860),  # 右脚摆到前但还没踩地
     }
 
 

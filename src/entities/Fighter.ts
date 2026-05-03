@@ -213,11 +213,19 @@ export class Fighter extends Container {
       this.sprite.scale.y = base * (1 + breath * 0.015);
       this.sprite.y = 0;
     } else if (this.state === 'walk') {
-      // 走路弧形 bounce：每 12 帧一段（与切帧间隔对齐），sin 0→1→0 让
-      // 脚跨步时浮起再落地。12 帧切帧瞬间恰好 bounce=0（脚踩地）
+      // 走路 vertical motion：分两层叠加
+      // 层 1：phase-aware Y offset（按 8 帧 walk cycle 的 hip 高度起伏）
+      //   contact (1,5) = 中, down (2,6) = 低, passing (3,7) = 中升, up (4,8) = 高
+      //   sprite normalize 把人物 bbox 拉成等高，所以 hip 起伏用代码补
+      // 层 2：每 12 帧内的弧形 bounce（脚踩地→抬起→踩地节奏）
+      const idx = Math.floor(t / 12) % 8;
+      // 层 1 phase offset (px)：contact 0, down +14（下沉）, passing -3, up -16（抬高）
+      const PHASE_Y_OFFSET = [0, 14, -3, -16, 0, 14, -3, -16];
+      const phaseY = PHASE_Y_OFFSET[idx];
+      // 层 2 局部 bounce
       const segPhase = ((t % 12) / 12) * Math.PI;
-      const lift = Math.sin(segPhase) * 3; // 最高抬起 3px
-      this.sprite.y = -lift;
+      const localLift = Math.sin(segPhase) * 2;
+      this.sprite.y = phaseY - localLift;
       this.sprite.scale.y = base;
     } else {
       this.sprite.scale.y = base;
