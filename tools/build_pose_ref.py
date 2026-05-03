@@ -22,13 +22,13 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).parent))
 from walk_skeleton import (
-    get_walk_cycle, render_frame, CELL_W, CELL_H, JOINT_COLORS, SKELETON_LINES,
+    get_walk_cycle, get_jab_sequence,
+    render_frame, CELL_W, CELL_H, JOINT_COLORS, SKELETON_LINES,
 )
 
 
 def render_single_skeleton(frame_kp: dict, out: Path) -> None:
-    """渲染单个 1024×1024 骨架 PNG（黑底）"""
-    img = Image.new('RGB', (CELL_W, CELL_H), (0, 0, 0))  # 纯黑底
+    img = Image.new('RGB', (CELL_W, CELL_H), (0, 0, 0))
     render_frame(frame_kp, img, offset_x=0)
     img.save(out)
 
@@ -36,15 +36,22 @@ def render_single_skeleton(frame_kp: dict, out: Path) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--base', required=True)
-    ap.add_argument('--skel-frame', type=int, required=True, help='1..8 (walk cycle frame)')
+    ap.add_argument('--action', default='walk', choices=['walk', 'jab'])
+    ap.add_argument('--skel-frame', type=int, required=True,
+                     help='walk: 1..8; jab: 1..3')
     ap.add_argument('--char', required=True, choices=['altman', 'dario'])
     ap.add_argument('--out', required=True)
     args = ap.parse_args()
 
     facing = 'right' if args.char == 'altman' else 'left'
-    cycle = get_walk_cycle(facing)
-    if not (1 <= args.skel_frame <= 8):
-        raise SystemExit('skel-frame must be 1..8')
+    if args.action == 'walk':
+        cycle = get_walk_cycle(facing)
+        if not (1 <= args.skel_frame <= 8):
+            raise SystemExit('walk skel-frame must be 1..8')
+    else:
+        cycle = get_jab_sequence(facing)
+        if not (1 <= args.skel_frame <= 3):
+            raise SystemExit('jab skel-frame must be 1..3')
     frame_kp = cycle[args.skel_frame - 1]
 
     # 1. 渲染单帧骨架 1024×1024

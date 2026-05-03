@@ -177,6 +177,86 @@ def _mirror_lr(frame: dict[str, KP]) -> dict[str, KP]:
     return swapped
 
 
+# === Jab 3 帧（朝右走时的设计；朝左走时整体几何镜像）===
+# jab_01: startup（蓄力姿势，双拳贴胸，膝微弯）
+# jab_02: active（出拳，右拳完全前伸最远端，左拳收回护面）
+# jab_03: recovery（拳收回中，准备回 idle）
+
+def _frame_jab_01() -> dict[str, KP]:
+    """蓄力 — 双拳收回贴胸前，膝微弯准备出招。"""
+    return {
+        'head':       KP(x=510, y=125),  # 略低 + 略前倾
+        'neck':       KP(x=515, y=225),
+        'l_shoulder': KP(x=505, y=235),
+        'r_shoulder': KP(x=525, y=235),
+        'l_elbow':    KP(x=465, y=380),  # 左肘内收
+        'r_elbow':    KP(x=565, y=380),  # 右肘内收（蓄力位）
+        'l_wrist':    KP(x=480, y=480),  # 左拳贴胸偏低
+        'r_wrist':    KP(x=560, y=475),  # 右拳贴胸（蓄力）
+        'hip_center': KP(x=515, y=605),
+        'l_hip':      KP(x=505, y=605),
+        'r_hip':      KP(x=525, y=605),
+        'l_knee':     KP(x=490, y=775),  # 微弯
+        'r_knee':     KP(x=540, y=775),
+        'l_ankle':    KP(x=470, y=945),  # 微马步
+        'r_ankle':    KP(x=575, y=945),
+    }
+
+
+def _frame_jab_02() -> dict[str, KP]:
+    """出拳到位 — 右拳完全前伸（朝右最远），身体前倾 momentum，左拳护脸。"""
+    return {
+        'head':       KP(x=530, y=110),  # 头前倾 + 上抬看出拳方向
+        'neck':       KP(x=520, y=215),
+        'l_shoulder': KP(x=500, y=225),
+        'r_shoulder': KP(x=535, y=215),  # 右肩前伸
+        'l_elbow':    KP(x=460, y=350),  # 左肘后收
+        'r_elbow':    KP(x=655, y=275),  # 右肘前伸
+        'l_wrist':    KP(x=485, y=455),  # 左拳护胸
+        'r_wrist':    KP(x=805, y=215),  # 右拳完全伸出最远端 + 上拉
+        'hip_center': KP(x=515, y=600),
+        'l_hip':      KP(x=505, y=600),
+        'r_hip':      KP(x=525, y=600),
+        'l_knee':     KP(x=475, y=775),
+        'r_knee':     KP(x=580, y=775),  # 右脚前撑
+        'l_ankle':    KP(x=440, y=945),  # 左脚后蹬
+        'r_ankle':    KP(x=625, y=945),  # 右脚前撑
+    }
+
+
+def _frame_jab_03() -> dict[str, KP]:
+    """拳收回中 — 介于 jab_01 和 jab_02 之间，从 active 回到 stance。"""
+    return {
+        'head':       KP(x=515, y=120),
+        'neck':       KP(x=515, y=220),
+        'l_shoulder': KP(x=505, y=230),
+        'r_shoulder': KP(x=525, y=225),
+        'l_elbow':    KP(x=470, y=370),
+        'r_elbow':    KP(x=600, y=325),  # 右肘收回中
+        'l_wrist':    KP(x=485, y=465),
+        'r_wrist':    KP(x=685, y=295),  # 右拳收回中（介于伸出和贴胸之间）
+        'hip_center': KP(x=515, y=605),
+        'l_hip':      KP(x=505, y=605),
+        'r_hip':      KP(x=525, y=605),
+        'l_knee':     KP(x=485, y=775),
+        'r_knee':     KP(x=545, y=775),
+        'l_ankle':    KP(x=465, y=945),
+        'r_ankle':    KP(x=580, y=945),
+    }
+
+
+def get_jab_sequence(facing: str = 'right') -> list[dict[str, KP]]:
+    """返回 3 帧 jab 序列，按 jab_01..03 顺序。"""
+    base = [_frame_jab_01(), _frame_jab_02(), _frame_jab_03()]
+    if facing == 'left':
+        out = []
+        for f in base:
+            mirrored = {k: KP(x=2 * CENTER_X - v['x'], y=v['y']) for k, v in f.items()}
+            out.append(mirrored)
+        return out
+    return base
+
+
 def get_walk_cycle(facing: str = 'right') -> list[dict[str, KP]]:
     """返回 8 帧 walk cycle，按 walk_01..08 顺序。
     facing='right' 默认设计；'left' 对所有 x 关于 CENTER_X 翻转（维持 left/right 标签为解剖学含义）。"""
@@ -250,22 +330,25 @@ def main() -> None:
 
     # Altman: facing right
     altman_cycle = get_walk_cycle('right')
-    # 4 strips × 2 frames each
     for i, label in enumerate(['walk_a', 'walk_b', 'walk_c', 'walk_d']):
         slot1 = altman_cycle[i * 2]
         slot2 = altman_cycle[i * 2 + 1]
         render_strip([slot1, slot2], out_dir / f'altman_{label}_skel.png')
 
-    # Dario: facing left
     dario_cycle = get_walk_cycle('left')
     for i, label in enumerate(['walk_a', 'walk_b', 'walk_c', 'walk_d']):
         slot1 = dario_cycle[i * 2]
         slot2 = dario_cycle[i * 2 + 1]
         render_strip([slot1, slot2], out_dir / f'dario_{label}_skel.png')
 
-    # 也输出全 8 帧并排的总览图（仅 Altman）便于检查
     render_strip(altman_cycle, out_dir / 'altman_walk_full.png')
     render_strip(dario_cycle, out_dir / 'dario_walk_full.png')
+
+    # === Jab 3 帧总览（也支持单独导出每帧用于 build_pose_ref） ===
+    altman_jabs = get_jab_sequence('right')
+    render_strip(altman_jabs, out_dir / 'altman_jab_full.png')
+    dario_jabs = get_jab_sequence('left')
+    render_strip(dario_jabs, out_dir / 'dario_jab_full.png')
 
 
 if __name__ == '__main__':
