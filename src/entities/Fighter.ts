@@ -213,9 +213,10 @@ export class Fighter extends Container {
       this.sprite.scale.y = base * (1 + breath * 0.015);
       this.sprite.y = 0;
     } else if (this.state === 'walk') {
-      // 走路弧形 bounce：每 16 帧一段，sin 0→1→0 让脚跨步时浮起再落地
-      const segPhase = ((t % 16) / 16) * Math.PI;
-      const lift = Math.sin(segPhase) * 2; // 最高抬起 2px
+      // 走路弧形 bounce：每 12 帧一段（与切帧间隔对齐），sin 0→1→0 让
+      // 脚跨步时浮起再落地。12 帧切帧瞬间恰好 bounce=0（脚踩地）
+      const segPhase = ((t % 12) / 12) * Math.PI;
+      const lift = Math.sin(segPhase) * 3; // 最高抬起 3px
       this.sprite.y = -lift;
       this.sprite.scale.y = base;
     } else {
@@ -280,9 +281,9 @@ export class Fighter extends Container {
 
     if (this.state === 'walk') {
       // 8 帧 walk cycle（contact_L / down_L / passing_L / up_L /
-      // contact_R / down_R / passing_R / up_R），每 6 帧切一次
-      // → 整 cycle 48 帧 ≈ 0.8s @60fps，约 1.25 cycle/s（2.5 步/秒）
-      const idx = Math.floor(this.elapsedFrames / 6) % 8;
+      // contact_R / down_R / passing_R / up_R），每 12 帧切一次
+      // → 整 cycle 96 帧 ≈ 1.6s @60fps，约 1.25 步/秒，看得清每帧
+      const idx = Math.floor(this.elapsedFrames / 12) % 8;
       return WALK_CYCLE_KEYS[idx];
     }
 

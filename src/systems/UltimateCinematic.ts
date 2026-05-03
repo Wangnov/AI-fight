@@ -35,7 +35,8 @@ export class UltimateCinematic extends Container {
     private readonly spec: UltimateSpec
   ) {
     super();
-    this.totalFrames = spec === 'altman' ? 180 : 240;
+    // 延长以达成 KOF 级史诗感：Altman 5s, Dario 6.3s
+    this.totalFrames = spec === 'altman' ? 300 : 380;
     this.dark = new Graphics()
       .rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT)
       .fill(spec === 'altman' ? 0x000000 : 0x180b25);
@@ -74,7 +75,7 @@ export class UltimateCinematic extends Container {
     return this.elapsed >= this.totalFrames;
   }
 
-  // === Altman 时间轴：3 秒 = 180 帧 ===
+  // === Altman 时间轴：5 秒 = 300 帧（史诗节奏）===
   private altmanFiredEvents = new Set<string>();
   private tickAltman(): void {
     const fire = (key: string, fn: () => void): void => {
@@ -83,64 +84,64 @@ export class UltimateCinematic extends Container {
         fn();
       }
     };
-    if (this.elapsed === 5) {
+    if (this.elapsed === 10) {
       fire('quote1', () =>
-        this.spawnSubtitle('"我只是问了一个问题……"', STAGE_HEIGHT * 0.35, 28, 0xffffff, 50)
+        this.spawnSubtitle('"我只是问了一个问题……"', STAGE_HEIGHT * 0.35, 30, 0xffffff, 80)
       );
     }
-    if (this.elapsed === 35) {
+    if (this.elapsed === 70) {
       fire('chair', () => this.spawnChair());
     }
-    if (this.elapsed === 60) {
+    if (this.elapsed === 120) {
       fire('headline', () =>
         this.spawnHeadline(
           'OH MAN...\nHERE IT IS.',
-          STAGE_HEIGHT * 0.45,
-          76,
+          STAGE_HEIGHT * 0.42,
+          82,
           0x4ade80,
-          80
-        )
-      );
-    }
-    if (this.elapsed === 65) {
-      fire('subtext', () =>
-        this.spawnSubtitle(
-          '"人类突然显得有点多余。"',
-          STAGE_HEIGHT * 0.65,
-          22,
-          0xa7f3d0,
-          70
+          120
         )
       );
     }
     if (this.elapsed === 130) {
-      fire('flash', () => this.spawnFullscreenFlash(0xffffff, 12));
+      fire('subtext', () =>
+        this.spawnSubtitle(
+          '"人类突然显得有点多余。"',
+          STAGE_HEIGHT * 0.66,
+          24,
+          0xa7f3d0,
+          110
+        )
+      );
+    }
+    if (this.elapsed === 220) {
+      fire('flash', () => this.spawnFullscreenFlash(0xffffff, 14));
       fire('shockwave', () => this.spawnShockwave());
       fire('mushroom', () => this.spawnMushroom());
       fire('hitText', () =>
         this.spawnHeadline(
-          'WHAT HAVE WE SHIPPED?!',
+          'WHAT HAVE\nWE SHIPPED?!',
           STAGE_HEIGHT * 0.4,
-          54,
+          64,
           0xfacc15,
-          50
+          70
         )
       );
     }
-    if (this.elapsed === 165) {
+    if (this.elapsed === 270) {
       fire('outro', () =>
         this.spawnSubtitle(
           '"Anyway, we have a lot to show you."',
           STAGE_HEIGHT * 0.5,
-          26,
+          28,
           0xffffff,
-          40
+          50
         )
       );
     }
   }
 
-  // === Dario 时间轴：4 秒 = 240 帧 ===
+  // === Dario 时间轴：6.3 秒 = 380 帧（KYC 弹窗一步步看清官僚流程）===
   private darioFiredEvents = new Set<string>();
   private tickDario(): void {
     const fire = (key: string, fn: () => void): void => {
@@ -152,46 +153,47 @@ export class UltimateCinematic extends Container {
     if (this.elapsed === 5) {
       fire('cathedral', () => this.spawnCathedral());
     }
-    if (this.elapsed === 15) {
+    if (this.elapsed === 30) {
       fire('headline1', () =>
         this.spawnSubtitle(
           '"Identity Verification Required."',
           STAGE_HEIGHT * 0.3,
-          30,
+          32,
           0xfb923c,
-          50
+          80
         )
       );
     }
-    if (this.elapsed === 60) {
-      fire('kyc1', () => this.spawnKYC(1, 35));
+    // KYC 三步弹窗：每步显示 70 帧 ≈ 1.17s 让玩家看清
+    if (this.elapsed === 100) {
+      fire('kyc1', () => this.spawnKYC(1, 70));
     }
-    if (this.elapsed === 95) {
-      fire('kyc2', () => this.spawnKYC(2, 35));
+    if (this.elapsed === 165) {
+      fire('kyc2', () => this.spawnKYC(2, 70));
     }
-    if (this.elapsed === 130) {
-      fire('kyc3', () => this.spawnKYC(3, 35));
+    if (this.elapsed === 230) {
+      fire('kyc3', () => this.spawnKYC(3, 70));
     }
-    if (this.elapsed === 168) {
-      fire('flash', () => this.spawnFullscreenFlash(0xfb923c, 8));
+    if (this.elapsed === 295) {
+      fire('flash', () => this.spawnFullscreenFlash(0xfb923c, 10));
       fire('pillar', () => this.spawnOrangePillar());
       fire('stamp', () => this.spawnAccessDeniedStamp());
       fire('miniStamps', () => this.spawnMiniStamps());
     }
-    if (this.elapsed === 178) {
+    if (this.elapsed === 310) {
       fire('hitText', () =>
         this.spawnHeadline(
           'YOU WERE NOT SELECTED\nBY CLAUDE.',
           STAGE_HEIGHT * 0.4,
-          50,
+          54,
           0xff6b6b,
-          50
+          70
         )
       );
     }
-    if (this.elapsed === 220) {
+    if (this.elapsed === 350) {
       fire('outro', () =>
-        this.spawnSubtitle('"For your safety."', STAGE_HEIGHT * 0.5, 26, 0xffffff, 20)
+        this.spawnSubtitle('"For your safety."', STAGE_HEIGHT * 0.5, 28, 0xffffff, 30)
       );
     }
   }
@@ -298,7 +300,7 @@ export class UltimateCinematic extends Container {
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + 100,
+      expire: this.totalFrames - 5, // 椅子保留到大招收尾，史诗感
       tick: (age, _total) => {
         if (age < fallFrames) {
           const p = age / fallFrames;
@@ -379,7 +381,7 @@ export class UltimateCinematic extends Container {
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + 220,
+      expire: this.totalFrames - 5, // 教堂光贯穿整个 Dario cinematic
       tick: (age, total) => {
         // 前 30 帧渐入，最后 40 帧渐出
         if (age < 30) sprite.alpha = (age / 30) * 0.85;

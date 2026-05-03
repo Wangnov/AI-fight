@@ -12,12 +12,16 @@ Walk cycle 8-frame strip prompt 模板。
 """
 
 # 共用前缀：identity lock + style lock + layout 约束
-def build_prompt(character_brief: str, body_color: str, slot1: dict, slot2: dict) -> str:
+def build_prompt(character_brief: str, body_color: str, slot1: dict, slot2: dict, facing: str = 'RIGHT') -> str:
+    walk_dir = 'right' if facing == 'RIGHT' else 'left'
+    walk_dir_caps = facing
+    front_side = 'right' if facing == 'RIGHT' else 'left'
+    back_side = 'left' if facing == 'RIGHT' else 'right'
     return f"""This input image already shows 2 IDENTICAL poses of the same arcade fighting game character on a flat magenta background, in 2 equal slots side by side. Critical: keep slot layout, slot widths, magenta background, and the character's identity EXACTLY as input.
 
 CHARACTER: {character_brief}
 
-TASK: Replace the pose inside each slot with a DISTINCT walk-cycle key pose described below. Both frames are part of one continuous walk cycle moving forward to the right.
+TASK: Replace the pose inside each slot with a DISTINCT walk-cycle key pose described below. Both frames are part of one continuous walk cycle moving forward to the {walk_dir_caps} side of the screen ({walk_dir} = the WALKING DIRECTION).
 
 == SLOT 1 (LEFT) — {slot1['name']} ==
 {slot1['description']}
@@ -36,7 +40,7 @@ LAYOUT (CRITICAL):
 - Each pose centered in its 1024x1024 slot, no pose crosses into the neighboring slot.
 - Background: pure flat magenta #ff00ff covering the entire canvas.
 - The 2 poses must clearly differ from each other — different leg positions, different hip heights, different arm positions.
-- All character poses face RIGHT (the walking direction).
+- All character poses face {walk_dir_caps} (the walking direction). The character's nose, chest, and toes ALL point to the {walk_dir} side of the canvas.
 
 ABSOLUTELY NO: speed lines, motion blur, motion arcs, afterimages, dust, smoke, shadows under feet, contact shadows, drop shadows, glow, halo, sparkles, text, labels, frame numbers, slot borders, grid lines, scenery, or any visible guide marks. Pure character on pure flat magenta background only.
 """
@@ -92,7 +96,7 @@ STRIPS = [
 ]
 
 
-def get_strip_prompt(character_brief: str, body_color: str, strip_id: str) -> str:
+def get_strip_prompt(character_brief: str, body_color: str, strip_id: str, facing: str = 'RIGHT') -> str:
     matches = [s for s in STRIPS if s[0] == strip_id]
     if not matches:
         raise ValueError(f"unknown strip_id: {strip_id}; choose one of {[s[0] for s in STRIPS]}")
@@ -102,6 +106,7 @@ def get_strip_prompt(character_brief: str, body_color: str, strip_id: str) -> st
         body_color=body_color,
         slot1={"name": POSES[slot1_id]["name"], "description": POSES[slot1_id]["description"]},
         slot2={"name": POSES[slot2_id]["name"], "description": POSES[slot2_id]["description"]},
+        facing=facing,
     )
 
 
@@ -124,4 +129,5 @@ if __name__ == "__main__":
     strip_id = sys.argv[1]
     char_id = sys.argv[2] if len(sys.argv) > 2 else "altman"
     char = CHARACTER_ALTMAN if char_id == "altman" else CHARACTER_DARIO
-    print(get_strip_prompt(char["brief"], char["body_color"], strip_id))
+    facing = 'LEFT' if char_id == 'dario' else 'RIGHT'
+    print(get_strip_prompt(char["brief"], char["body_color"], strip_id, facing=facing))

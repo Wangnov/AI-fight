@@ -70,11 +70,13 @@ export interface AttackData {
   energyGain: number; // 命中时自身能量增长
 }
 
+// 帧数放慢到能看清动作（@60fps）
 export const ATTACK_JAB: AttackData = {
   damage: 50,
-  startup: 2,
-  active: 3,
-  recovery: 6,
+  startup: 5,    // 83ms 起手蓄力
+  active: 6,     // 100ms 出拳判定
+  recovery: 14,  // 233ms 收招
+  // 总 25 帧 = 417ms，街机感
   hitboxOffsetX: 80,
   hitboxWidth: 70,
   hitboxHeight: 80,
@@ -85,9 +87,10 @@ export const ATTACK_JAB: AttackData = {
 
 export const ATTACK_COMBO_2: AttackData = {
   damage: 100,
-  startup: 6,
-  active: 4,
-  recovery: 24,
+  startup: 12,   // 200ms 蓄力（明显的 telegraph）
+  active: 8,     // 133ms 挥击
+  recovery: 28,  // 467ms 大招式后摇
+  // 总 48 帧 = 800ms
   hitboxOffsetX: 90,
   hitboxWidth: 110,
   hitboxHeight: 200,
@@ -126,15 +129,16 @@ export interface ProjectileData {
 
 export const PROJECTILE_COMBO_1: ProjectileData = {
   damage: 120,
-  startup: 8,
-  recovery: 30,
+  startup: 16,   // 267ms 蓄力（看清 cast 帧）
+  recovery: 34,  // 567ms 收招
+  // 总 50 帧 = 833ms
   speed: 8,
-  width: 60,
-  height: 50,
+  width: 80,
+  height: 70,
   knockback: KNOCKBACK_HEAVY,
   hitstopFrames: HITSTOP_FRAMES_HEAVY,
   energyGain: ENERGY_ON_COMBO_HIT,
-  lifetimeFrames: 90, // 1.5 秒后消散
+  lifetimeFrames: 90,
 };
 
 // === 颜色（灰盒占位）===
