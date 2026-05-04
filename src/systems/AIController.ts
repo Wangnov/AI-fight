@@ -65,18 +65,18 @@ export class AIController {
       this.input.hold(facingRight ? 'left' : 'right');
     }
 
-    // 主动出招（受 nextAttackTimer 限速；间隔放宽让玩家有反击空间）
+    // 主动出招（受 nextAttackTimer 限速；PVE 先留足反击窗口）
     if (this.nextAttackTimer <= 0) {
       if (dist < 160) {
         const r = Math.random();
-        if (r < 0.4) this.input.press('jab');
-        else if (r < 0.55) this.input.press('combo2');
-        this.nextAttackTimer = 50 + Math.floor(Math.random() * 50);
+        if (r < 0.32) this.input.press('jab');
+        else if (r < 0.42) this.input.press('combo2');
+        this.nextAttackTimer = 70 + Math.floor(Math.random() * 55);
       } else if (dist > 250 && dist < 700) {
-        if (Math.random() < 0.45) {
+        if (Math.random() < 0.28) {
           this.input.press('combo1');
         }
-        this.nextAttackTimer = 90 + Math.floor(Math.random() * 60);
+        this.nextAttackTimer = 120 + Math.floor(Math.random() * 80);
       } else {
         this.nextAttackTimer = 30;
       }
