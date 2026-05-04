@@ -36,8 +36,8 @@ import { UltimateCinematic } from '../systems/UltimateCinematic';
 
 export type BattleMode = 'pvp' | 'pve';
 export type BattleResult =
-  | { kind: 'ko'; winnerId: 'P1' | 'P2' }
-  | { kind: 'time'; winnerId: 'P1' | 'P2' | 'draw' };
+  | { kind: 'ko'; winnerId: 'P1' | 'P2'; selections: BattleSelections }
+  | { kind: 'time'; winnerId: 'P1' | 'P2' | 'draw'; selections: BattleSelections };
 
 export interface BattleSceneOptions {
   input: InputManager;
@@ -58,6 +58,7 @@ export class BattleScene extends Scene {
   private readonly mode: BattleMode;
   private readonly input: InputManager;
   private readonly onEnd: (result: BattleResult) => void;
+  private readonly selections: BattleSelections;
 
   private readonly worldLayer: Container;
   private readonly fightersLayer: Container;
@@ -140,9 +141,9 @@ export class BattleScene extends Scene {
     this.worldLayer.addChild(this.fightersLayer);
 
     // === 角色 ===
-    const selections = opts.selections ?? DEFAULT_BATTLE_SELECTIONS;
-    const p1Character = getCharacterDefinition(selections.p1);
-    const p2Character = getCharacterDefinition(selections.p2);
+    this.selections = opts.selections ?? DEFAULT_BATTLE_SELECTIONS;
+    const p1Character = getCharacterDefinition(this.selections.p1);
+    const p2Character = getCharacterDefinition(this.selections.p2);
     this.p1 = new Fighter('P1', p1Character.preset, SPAWN_X_P1);
     this.p2 = new Fighter('P2', p2Character.preset, SPAWN_X_P2);
     this.p1.setOpponent(this.p2);
@@ -439,7 +440,7 @@ export class BattleScene extends Scene {
               : 'P1';
         const winner = winnerId === 'P1' ? this.p1 : this.p2;
         winner.triggerWin();
-        this.scheduleEnd({ kind: 'ko', winnerId });
+        this.scheduleEnd({ kind: 'ko', winnerId, selections: this.selections });
       } else if (this.timeLeftMS <= 0) {
         this.ended = true;
         const winnerId =
@@ -447,7 +448,7 @@ export class BattleScene extends Scene {
         if (winnerId !== 'draw') {
           (winnerId === 'P1' ? this.p1 : this.p2).triggerWin();
         }
-        this.scheduleEnd({ kind: 'time', winnerId });
+        this.scheduleEnd({ kind: 'time', winnerId, selections: this.selections });
       }
     } else {
       this.endDelay -= 1;

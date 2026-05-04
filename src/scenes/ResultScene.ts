@@ -5,6 +5,11 @@ import { InputManager } from '../input/InputManager';
 import { sfx } from '../systems/SoundManager';
 import type { SpriteSet } from '../assets/SpriteSet';
 import type { BattleResult } from './BattleScene';
+import {
+  getCharacterDefinition,
+  type CharacterId,
+  type CharacterDefinition,
+} from '../config/characters';
 
 export interface ResultSceneOptions {
   input: InputManager;
@@ -13,25 +18,15 @@ export interface ResultSceneOptions {
   onContinue: () => void;
 }
 
-const WINNER_LINES: Record<'P1' | 'P2' | 'draw', { headline: string; quote: string }> = {
-  P1: {
-    headline: 'ALTMAN WINS',
-    quote: '"Anyway, we have a lot to show you."',
-  },
-  P2: {
-    headline: 'DARIO WINS',
-    quote: '"Your defeat has been safety-audited."',
-  },
-  draw: {
-    headline: 'DRAW',
-    quote: '"This was a packaging issue, not a defeat."',
-  },
+const DRAW_LINES = {
+  headline: 'DRAW',
+  quote: '"This was a packaging issue, not a defeat."',
 };
+const DRAW_COLOR = 0xa1a1aa;
 
-const WINNER_COLORS: Record<'P1' | 'P2' | 'draw', number> = {
-  P1: 0x4ade80,
-  P2: 0xfb923c,
-  draw: 0xa1a1aa,
+const CHARACTER_WIN_QUOTES: Record<CharacterId, string> = {
+  altman: '"Anyway, we have a lot to show you."',
+  dario: '"Your defeat has been safety-audited."',
 };
 
 export class ResultScene extends Scene {
@@ -50,16 +45,29 @@ export class ResultScene extends Scene {
     this.onContinue = opts.onContinue;
 
     const winner = opts.result.winnerId;
-    const lines = WINNER_LINES[winner];
-    const accent = WINNER_COLORS[winner];
+    const winnerCharacter = this.getWinnerCharacter(opts.result);
+    const lines = winnerCharacter
+      ? {
+          headline: `${winnerCharacter.name} WINS`,
+          quote: CHARACTER_WIN_QUOTES[winnerCharacter.id],
+        }
+      : DRAW_LINES;
+    const accent = winnerCharacter?.color ?? DRAW_COLOR;
     this.winnerColor = accent;
 
-    void this.spawnLayers(opts, winner, lines, accent);
+    void this.spawnLayers(opts, winner, winnerCharacter, lines, accent);
+  }
+
+  private getWinnerCharacter(result: BattleResult): CharacterDefinition | null {
+    if (result.winnerId === 'draw') return null;
+    const characterId = result.winnerId === 'P1' ? result.selections.p1 : result.selections.p2;
+    return getCharacterDefinition(characterId);
   }
 
   private async spawnLayers(
     opts: ResultSceneOptions,
     winner: 'P1' | 'P2' | 'draw',
+    winnerCharacter: CharacterDefinition | null,
     lines: { headline: string; quote: string },
     accent: number
   ): Promise<void> {
@@ -89,8 +97,8 @@ export class ResultScene extends Scene {
     this.addChild(overlay);
 
     // === Winner full pose (large) ===
-    if (winner !== 'draw') {
-      const path = winner === 'P1' ? '/sprites/scene/menu_altman.png' : '/sprites/scene/menu_dario.png';
+    if (winner !== 'draw' && winnerCharacter) {
+      const path = `/sprites/scene/menu_${winnerCharacter.id}.png`;
       try {
         const tex = await Assets.load<Texture>(path);
         this.winnerPose = new Sprite(tex);
@@ -103,12 +111,14 @@ export class ResultScene extends Scene {
       } catch {
         // fallback to win sprite from spriteset
         if (opts.sprites) {
-          const winnerSprites = winner === 'P1' ? opts.sprites.altman : opts.sprites.dario;
+          const winnerSprites = winnerCharacter.id === 'altman'
+            ? opts.sprites.altman
+            : opts.sprites.dario;
           this.winnerPose = new Sprite(winnerSprites.get('win'));
           this.winnerPose.anchor.set(0.5, 1);
           const targetH = STAGE_HEIGHT * 0.78;
           const s = targetH / Math.max(this.winnerPose.texture.height, 1);
-          this.winnerPose.scale.set(winner === 'P2' ? -s : s, s);
+          this.winnerPose.scale.set(winnerCharacter.preset.facingRight ? s : -s, s);
           this.winnerPose.x = STAGE_WIDTH * 0.30;
           this.winnerPose.y = STAGE_HEIGHT - 8;
           this.addChild(this.winnerPose);
@@ -164,8 +174,8 @@ export class ResultScene extends Scene {
     }
 
     // === Background winner VFX (mushroom for Altman, stamp for Dario) ===
-    if (winner !== 'draw') {
-      const path = winner === 'P1'
+    if (winner !== 'draw' && winnerCharacter) {
+      const path = winnerCharacter.id === 'altman'
         ? '/sprites/vfx/mushroom_cloud.png'
         : '/sprites/vfx/access_denied_stamp.png';
       try {
