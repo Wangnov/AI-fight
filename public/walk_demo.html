@@ -81,11 +81,11 @@
     </style>
   </head>
   <body>
-    <h1>Walk Cycle Demo — 8 帧 + phase Y offset</h1>
+    <h1>Walk Cycle Demo — 4 帧 KOF 风格 (Ryu pose-strip 单图共生成)</h1>
     <p class="info">
-      跟游戏内同节奏：每 12 帧 (200ms) 切一次 frame，1 完整 cycle = 1.6s。
-      Sprite Y offset PHASE_Y = [0, +14, -3, -16, 0, +14, -3, -16] 模拟
-      contact / down / passing / up × 左右脚 的 hip 高度起伏。
+      跟游戏内同节奏：每 12 帧 (200ms) 切一次 frame，1 完整 cycle = 0.8s。
+      4 帧 cycle: contact_L / passing / contact_R / passing。
+      Sprite Y offset PHASE_Y = [0, -3, 0, -3] 模拟 KOF 风格的极轻微 hip 起伏。
     </p>
     <div class="controls">
       <label>速度: <span id="speedLabel">1.0x</span></label>
@@ -110,12 +110,11 @@
       </div>
     </div>
     <script>
-      const PHASE_Y = [0, 14, -3, -16, 0, 14, -3, -16];
-      const TOTAL_FRAMES = 8;
+      const PHASE_Y = [0, -3, 0, -3];
+      const TOTAL_FRAMES = 4;
       const FRAME_DURATION_MS = 200;
       const phaseLabels = [
-        '01 contact_L', '02 down_L', '03 passing_L', '04 up_L',
-        '05 contact_R', '06 down_R', '07 passing_R', '08 up_R',
+        '01 contact_L', '02 passing', '03 contact_R', '04 passing',
       ];
       let speed = 1;
       let playing = true;
@@ -127,9 +126,9 @@
         document.getElementById('altmanImg').src = `/sprites/altman/altman_walk_${padNum}.png`;
         document.getElementById('darioImg').src = `/sprites/dario/dario_walk_${padNum}.png`;
         const phaseY = PHASE_Y[i];
-        // 每 12 帧内还有 sin bounce ±2
+        // 每 12 帧内极轻微 sin bounce ±1（KOF 风格）
         const segPhase = ((Date.now() / 16.67) % 12) / 12 * Math.PI;
-        const localLift = Math.sin(segPhase) * 2;
+        const localLift = Math.sin(segPhase) * 1;
         const totalY = phaseY - localLift;
         document.getElementById('altmanSprite').style.transform = `translateY(${totalY}px)`;
         document.getElementById('darioSprite').style.transform = `translateY(${totalY}px)`;

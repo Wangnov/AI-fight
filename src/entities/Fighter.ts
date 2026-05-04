@@ -21,6 +21,7 @@ import {
   type FighterPreset,
 } from '../config/constants';
 import type { InputProvider } from '../input/InputProvider';
+import { sfx } from '../systems/SoundManager';
 import { Projectile } from './Projectile';
 import type { AABB, AttackKind, FighterId } from '../types';
 import type { SpriteSet } from '../assets/SpriteSet';
@@ -77,6 +78,16 @@ export class Fighter extends Container {
   private flashFrames = 0;
   private sprite!: Sprite;
   private spriteSet: SpriteSet | null = null;
+  private forcedFrame: string | null = null;
+
+  /** BattleScene 在 cinematic 期间强制覆盖 sprite frame；传 null 恢复正常 */
+  setForcedFrame(key: string | null): void {
+    this.forcedFrame = key;
+    // cinematic 期间 fighter.update() 不调用，需手动刷 sprite
+    if (this.spriteSet) {
+      this.updateSpriteFrame();
+    }
+  }
   private spriteBaseScale = 1; // setSpriteSet 时根据 sprite 高度算出，是 idle/walk 节奏的基准
   private vfxSet: SpriteSet | null = null;
   private elapsedFrames = 0;
@@ -173,7 +184,7 @@ export class Fighter extends Container {
   /** Sprite 模式：根据 state + elapsedFrames 选帧并应用镜像 */
   private updateSpriteFrame(): void {
     if (!this.spriteSet) return;
-    const key = this.pickFrameKey();
+    const key = this.forcedFrame ?? this.pickFrameKey();
     this.sprite.texture = this.spriteSet.get(key);
     this.applySpriteFacing();
     // tint 决策：受击优先（偏粉红），否则防御态偏蓝，再否则原色
@@ -213,18 +224,14 @@ export class Fighter extends Container {
       this.sprite.scale.y = base * (1 + breath * 0.015);
       this.sprite.y = 0;
     } else if (this.state === 'walk') {
-      // 走路 vertical motion：分两层叠加
-      // 层 1：phase-aware Y offset（按 8 帧 walk cycle 的 hip 高度起伏）
-      //   contact (1,5) = 中, down (2,6) = 低, passing (3,7) = 中升, up (4,8) = 高
-      //   sprite normalize 把人物 bbox 拉成等高，所以 hip 起伏用代码补
-      // 层 2：每 12 帧内的弧形 bounce（脚踩地→抬起→踩地节奏）
-      const idx = Math.floor(t / 12) % 8;
-      // 层 1 phase offset (px)：contact 0, down +14（下沉）, passing -3, up -16（抬高）
-      const PHASE_Y_OFFSET = [0, 14, -3, -16, 0, 14, -3, -16];
+      // 4 帧 walk cycle (KOF EX/XI 风格)：contact_L / passing / contact_R / passing
+      // 拳皇 walk 头部几乎不动（< 4px），所以 phase Y 很小，只在 passing 微微抬一下
+      const idx = Math.floor(t / 12) % 4;
+      const PHASE_Y_OFFSET = [0, -3, 0, -3];
       const phaseY = PHASE_Y_OFFSET[idx];
-      // 层 2 局部 bounce
+      // 每 12 帧内的极轻微 bounce（脚步节奏感）
       const segPhase = ((t % 12) / 12) * Math.PI;
-      const localLift = Math.sin(segPhase) * 2;
+      const localLift = Math.sin(segPhase) * 1;
       this.sprite.y = phaseY - localLift;
       this.sprite.scale.y = base;
     } else {
@@ -288,10 +295,9 @@ export class Fighter extends Container {
     }
 
     if (this.state === 'walk') {
-      // 8 帧 walk cycle（contact_L / down_L / passing_L / up_L /
-      // contact_R / down_R / passing_R / up_R），每 12 帧切一次
-      // → 整 cycle 96 帧 ≈ 1.6s @60fps，约 1.25 步/秒，看得清每帧
-      const idx = Math.floor(this.elapsedFrames / 12) % 8;
+      // 4 帧 walk cycle（KOF 风格：contact_L / passing / contact_R / passing），每 12 帧切一次
+      // → 整 cycle 48 帧 ≈ 0.8s @60fps，约 1.25 步/秒
+      const idx = Math.floor(this.elapsedFrames / 12) % 4;
       return WALK_CYCLE_KEYS[idx];
     }
 
@@ -448,6 +454,7 @@ export class Fighter extends Container {
     if (onGround && input.wasPressed('up')) {
       this.vy = JUMP_VELOCITY;
       this.setState('jump');
+      sfx.play('jump');
     }
 
     // 移动
@@ -475,6 +482,10 @@ export class Fighter extends Container {
     };
     this.setState('attack');
     this.vx = 0;
+    // 攻击发声（ultimate 留给 BattleScene cinematic 触发）
+    if (kind === 'jab') sfx.play('jab');
+    else if (kind === 'combo1') sfx.play('jab');
+    else if (kind === 'combo2') sfx.play('heavy');
   }
 
   private tickAttack(): void {
@@ -607,11 +618,13 @@ export class Fighter extends Container {
     this.energy = Math.min(MAX_ENERGY, this.energy + (blocked ? ENERGY_ON_BLOCK : ENERGY_ON_TAKEN));
 
     if (blocked) {
+      sfx.play('block');
       // 防御也吃一点击退，但很轻
       this.vx = opts.fromDirection * 6;
       this.hitstopFrames = Math.max(this.hitstopFrames, opts.hitstopFrames);
       this.flashFrames = 2;
     } else {
+      sfx.play(opts.isUltimate ? 'heavy' : 'jab');
       this.vx = opts.fromDirection * (opts.knockback * 0.3);
       this.vy = -6;
       this.hitstopFrames = Math.max(this.hitstopFrames, opts.hitstopFrames);
