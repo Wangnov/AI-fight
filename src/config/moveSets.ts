@@ -7,6 +7,8 @@ interface ProjectileMove {
   startupFrame: FrameKey;
   releaseFrame: FrameKey;
   vfxKey: string;
+  spawnOffsetX: number;
+  spawnOffsetY: number;
 }
 
 interface HeavyMove {
@@ -34,6 +36,8 @@ export const MOVE_SETS: Record<MoveSetId, FighterMoveSet> = {
       startupFrame: 'codex_cast',
       releaseFrame: 'codex_throw',
       vfxKey: 'pr_folder',
+      spawnOffsetX: 170,
+      spawnOffsetY: -305,
     },
     combo2: {
       startupFrame: 'benchmark_windup',
@@ -54,6 +58,8 @@ export const MOVE_SETS: Record<MoveSetId, FighterMoveSet> = {
       startupFrame: 'mythos_cast',
       releaseFrame: 'mythos_release',
       vfxKey: 'vulnerability_shard',
+      spawnOffsetX: 158,
+      spawnOffsetY: -285,
     },
     combo2: {
       startupFrame: 'constitution_cast',
@@ -73,6 +79,8 @@ export const MOVE_SETS: Record<MoveSetId, FighterMoveSet> = {
       startupFrame: 'orbit_cast',
       releaseFrame: 'orbit_throw',
       vfxKey: 'satellite_packet',
+      spawnOffsetX: 160,
+      spawnOffsetY: -285,
     },
     combo2: {
       startupFrame: 'rocket_windup',

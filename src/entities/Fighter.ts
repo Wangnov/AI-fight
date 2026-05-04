@@ -319,6 +319,12 @@ export class Fighter extends Container {
     this.opponent = other;
   }
 
+  faceOpponent(redraw = true): void {
+    if (!this.opponent || this.state === 'hit' || this.state === 'attack') return;
+    this.facing = this.opponent.x > this.x ? 1 : -1;
+    if (redraw) this.redraw();
+  }
+
   setVfxSet(vfx: SpriteSet): void {
     this.vfxSet = vfx;
   }
@@ -364,9 +370,7 @@ export class Fighter extends Container {
     this.elapsedFrames += 1;
 
     // 自动朝向对手
-    if (this.opponent && this.state !== 'hit' && this.state !== 'attack') {
-      this.facing = this.opponent.x > this.x ? 1 : -1;
-    }
+    this.faceOpponent(false);
 
     // 大招硬直 / 受击硬直递减
     if (this.stunFrames > 0) this.stunFrames -= 1;
@@ -505,10 +509,11 @@ export class Fighter extends Container {
 
     // combo1：在 startup 帧到达时生成投射物
     if (a.kind === 'combo1' && !a.spawnedProjectile && a.frame >= PROJECTILE_COMBO_1.startup) {
+      const move = MOVE_SETS[this.preset.moveSetId].combo1;
       const texture = this.vfxSet?.get(this.getProjectileVfxKey()) ?? null;
       const proj = new Projectile(
-        this.x + 60 * this.facing,
-        this.y - FIGHTER_HEIGHT * 0.6,
+        this.x + move.spawnOffsetX * this.facing,
+        this.y + move.spawnOffsetY,
         this.facing,
         this.preset.projectileColor,
         PROJECTILE_COMBO_1,

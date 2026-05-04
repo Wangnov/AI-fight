@@ -166,6 +166,7 @@ export class BattleScene extends Scene {
     }
     this.fightersLayer.addChild(this.p1);
     this.fightersLayer.addChild(this.p2);
+    this.faceFightersTowardEachOther();
 
     // === 命中效果层（火花 + 字效，受 shake 影响）===
     if (this.vfxSprites) {
@@ -287,6 +288,11 @@ export class BattleScene extends Scene {
     return root;
   }
 
+  private faceFightersTowardEachOther(): void {
+    this.p1.faceOpponent();
+    this.p2.faceOpponent();
+  }
+
   /** 倒计时阶段：每秒 60 帧 — 0-60: "3", 60-120: "2", 120-180: "1", 180-240: "FIGHT!" */
   private updateCountdown(): boolean {
     if (this.countdownFrames <= 0) return false;
@@ -326,6 +332,7 @@ export class BattleScene extends Scene {
   update(deltaMS: number): void {
     // === 开场倒计时：冻结战斗 + 不推进时间 ===
     if (this.updateCountdown()) {
+      this.faceFightersTowardEachOther();
       this.feedback?.showActiveAttacks([]);
       this.hud.update(this.timeLeftMS / 1000);
       this.aiInput?.endFrame();
