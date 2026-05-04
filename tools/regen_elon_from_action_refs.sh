@@ -133,3 +133,5 @@ cd "$ROOT"
 "$ROOT/.venv/bin/python" "$ROOT/tools/normalize_sprite.py" \
   --dir "$ROOT/public/sprites/elon" \
   --in-place
+"$ROOT/.venv/bin/python" "$ROOT/tools/normalize_elon_scale.py" \
+  --dir "$ROOT/public/sprites/elon"
