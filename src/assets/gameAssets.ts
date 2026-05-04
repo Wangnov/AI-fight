@@ -2,6 +2,7 @@ import { Assets, type Texture } from 'pixi.js';
 import { SpriteSet } from './SpriteSet';
 import { ALTMAN_FRAMES, DARIO_FRAMES, ELON_FRAMES } from './spriteFrames';
 import { VFX_FRAMES } from './vfxFrames';
+import { ARENA_BACKGROUND_PATHS, type ArenaId } from '../config/stages';
 
 export interface BattleAssets {
   altman: SpriteSet;
@@ -9,6 +10,7 @@ export interface BattleAssets {
   elon: SpriteSet;
   vfx: SpriteSet;
   bgArena: Texture;
+  bgArenas: Record<ArenaId, Texture>;
 }
 
 const MENU_ASSET_PATHS = [
@@ -51,10 +53,15 @@ export function loadBattleAssets(): Promise<BattleAssets> {
     SpriteSet.load(DARIO_FRAMES),
     SpriteSet.load(ELON_FRAMES),
     SpriteSet.load(VFX_FRAMES, 'hit_spark'),
-    Assets.load<Texture>('/sprites/scene/bg_arena.png'),
+    Promise.all(
+      Object.entries(ARENA_BACKGROUND_PATHS).map(([id, path]) =>
+        Assets.load<Texture>(path).then((texture) => [id, texture] as const)
+      )
+    ),
   ])
-    .then(([altman, dario, elon, vfx, bgArena]) => {
-      battleAssets = { altman, dario, elon, vfx, bgArena };
+    .then(([altman, dario, elon, vfx, arenaEntries]) => {
+      const bgArenas = Object.fromEntries(arenaEntries) as Record<ArenaId, Texture>;
+      battleAssets = { altman, dario, elon, vfx, bgArena: bgArenas.altmanDario, bgArenas };
       return battleAssets;
     })
     .catch((err: unknown) => {

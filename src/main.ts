@@ -9,6 +9,7 @@ import { InputManager } from './input/InputManager';
 import { BattleScene, type BattleMode, type BattleResult } from './scenes/BattleScene';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene';
 import type { BattleSelections } from './config/characters';
+import { getArenaIdForSelections } from './config/stages';
 import { LoadingScene } from './scenes/LoadingScene';
 import { MenuScene } from './scenes/MenuScene';
 import { ResultScene } from './scenes/ResultScene';
@@ -90,12 +91,19 @@ import {
 
     void loadBattleAssets().then(
       (assets) => {
+        const bgArena = assets.bgArenas[getArenaIdForSelections(selections)] ?? assets.bgArena;
         manager.switchTo(
           new BattleScene({
             input,
             mode,
             selections,
-            sprites: assets,
+            sprites: {
+              altman: assets.altman,
+              dario: assets.dario,
+              elon: assets.elon,
+              vfx: assets.vfx,
+              bgArena,
+            },
             onEnd: (result) => showResult(result),
           })
         );
@@ -112,16 +120,19 @@ import {
 
   const showResult = (result: BattleResult): void => {
     const assets = getLoadedBattleAssets();
+    const bgArena = assets
+      ? assets.bgArenas[getArenaIdForSelections(result.selections)] ?? assets.bgArena
+      : null;
     manager.switchTo(
       new ResultScene({
         input,
         result,
-        sprites: assets
+        sprites: assets && bgArena
           ? {
               altman: assets.altman,
               dario: assets.dario,
               elon: assets.elon,
-              bgArena: assets.bgArena,
+              bgArena,
             }
           : undefined,
         onContinue: () => showMenu(),
