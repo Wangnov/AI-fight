@@ -4,8 +4,6 @@ import {
   GROUND_Y,
   KEYS_P1,
   KEYS_P2,
-  PRESET_ALTMAN,
-  PRESET_DARIO,
   ROUND_TIME_SECONDS,
   SPAWN_X_P1,
   SPAWN_X_P2,
@@ -13,6 +11,12 @@ import {
   STAGE_HEIGHT,
   STAGE_WIDTH,
 } from '../config/constants';
+import {
+  DEFAULT_BATTLE_SELECTIONS,
+  getCharacterDefinition,
+  type BattleSelections,
+  type CharacterId,
+} from '../config/characters';
 import { Scene } from '../core/Scene';
 import { Fighter } from '../entities/Fighter';
 import { Projectile } from '../entities/Projectile';
@@ -44,8 +48,11 @@ export interface BattleSceneOptions {
     vfx: SpriteSet;
     bgArena: Texture;
   };
+  selections?: BattleSelections;
   onEnd: (result: BattleResult) => void;
 }
+
+type CharacterSpriteSets = Record<CharacterId, SpriteSet>;
 
 export class BattleScene extends Scene {
   private readonly mode: BattleMode;
@@ -133,13 +140,20 @@ export class BattleScene extends Scene {
     this.worldLayer.addChild(this.fightersLayer);
 
     // === 角色 ===
-    this.p1 = new Fighter('P1', PRESET_ALTMAN, SPAWN_X_P1);
-    this.p2 = new Fighter('P2', PRESET_DARIO, SPAWN_X_P2);
+    const selections = opts.selections ?? DEFAULT_BATTLE_SELECTIONS;
+    const p1Character = getCharacterDefinition(selections.p1);
+    const p2Character = getCharacterDefinition(selections.p2);
+    this.p1 = new Fighter('P1', p1Character.preset, SPAWN_X_P1);
+    this.p2 = new Fighter('P2', p2Character.preset, SPAWN_X_P2);
     this.p1.setOpponent(this.p2);
     this.p2.setOpponent(this.p1);
     if (opts.sprites) {
-      this.p1.setSpriteSet(opts.sprites.altman);
-      this.p2.setSpriteSet(opts.sprites.dario);
+      const fighterSprites: CharacterSpriteSets = {
+        altman: opts.sprites.altman,
+        dario: opts.sprites.dario,
+      };
+      this.p1.setSpriteSet(fighterSprites[p1Character.id]);
+      this.p2.setSpriteSet(fighterSprites[p2Character.id]);
       this.p1.setVfxSet(opts.sprites.vfx);
       this.p2.setVfxSet(opts.sprites.vfx);
       this.vfxSprites = opts.sprites.vfx;

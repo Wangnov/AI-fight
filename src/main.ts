@@ -8,6 +8,7 @@ import { SceneManager } from './core/SceneManager';
 import { InputManager } from './input/InputManager';
 import { BattleScene, type BattleMode, type BattleResult } from './scenes/BattleScene';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene';
+import type { BattleSelections } from './config/characters';
 import { LoadingScene } from './scenes/LoadingScene';
 import { MenuScene } from './scenes/MenuScene';
 import { ResultScene } from './scenes/ResultScene';
@@ -75,13 +76,13 @@ import {
         input,
         mode,
         bgArena: getLoadedBattleAssets()?.bgArena ?? null,
-        onConfirm: (m) => showBattle(m),
+        onConfirm: (m, selections) => showBattle(m, selections),
         onBack: () => showMenu(),
       })
     );
   };
 
-  const showBattle = (mode: BattleMode): void => {
+  const showBattle = (mode: BattleMode, selections: BattleSelections): void => {
     manager.switchTo(new LoadingScene({
       title: 'LOADING FIGHT',
       subtitle: 'warming sprites and effects',
@@ -93,6 +94,7 @@ import {
           new BattleScene({
             input,
             mode,
+            selections,
             sprites: assets,
             onEnd: (result) => showResult(result),
           })
