@@ -1,7 +1,8 @@
-import { Graphics, Sprite, Text, type Texture } from 'pixi.js';
+import { Assets, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { STAGE_HEIGHT, STAGE_WIDTH } from '../config/constants';
 import { Scene } from '../core/Scene';
 import { InputManager } from '../input/InputManager';
+import { sfx } from '../systems/SoundManager';
 import type { SpriteSet } from '../assets/SpriteSet';
 import type { BattleResult } from './BattleScene';
 
@@ -36,7 +37,12 @@ const WINNER_COLORS: Record<'P1' | 'P2' | 'draw', number> = {
 export class ResultScene extends Scene {
   private readonly input: InputManager;
   private readonly onContinue: () => void;
-  private cooldown = 30; // 防止误触把 Enter 立刻吃掉
+  private cooldown = 30;
+  private elapsed = 0;
+  private winnerPose: Sprite | null = null;
+  private headlineText: Text | null = null;
+  private bgVfx: Sprite | null = null;
+  private winnerColor = 0x4ade80;
 
   constructor(opts: ResultSceneOptions) {
     super();
@@ -46,102 +52,218 @@ export class ResultScene extends Scene {
     const winner = opts.result.winnerId;
     const lines = WINNER_LINES[winner];
     const accent = WINNER_COLORS[winner];
+    this.winnerColor = accent;
 
-    // 半透明 bg_arena 背景作为底，再叠一层暗化遮罩，增强场景一致性
-    if (opts.sprites?.bgArena) {
+    void this.spawnLayers(opts, winner, lines, accent);
+  }
+
+  private async spawnLayers(
+    opts: ResultSceneOptions,
+    winner: 'P1' | 'P2' | 'draw',
+    lines: { headline: string; quote: string },
+    accent: number
+  ): Promise<void> {
+    // === BG ===
+    let bgUsed = false;
+    try {
+      const tex = await Assets.load<Texture>('/sprites/scene/menu_bg.png');
+      const bg = new Sprite(tex);
+      bg.width = STAGE_WIDTH;
+      bg.height = STAGE_HEIGHT;
+      bg.alpha = 0.6;
+      this.addChild(bg);
+      bgUsed = true;
+    } catch {
+      /* */
+    }
+    if (!bgUsed && opts.sprites?.bgArena) {
       const bg = new Sprite(opts.sprites.bgArena);
       bg.width = STAGE_WIDTH;
       bg.height = STAGE_HEIGHT;
       bg.alpha = 0.4;
       this.addChild(bg);
     }
-
     const overlay = new Graphics()
       .rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT)
-      .fill(0x05080d);
-    overlay.alpha = 0.78;
+      .fill({ color: 0x000000, alpha: 0.55 });
     this.addChild(overlay);
 
-    // 获胜者大幅 win sprite 居中偏左
-    if (opts.sprites && winner !== 'draw') {
-      const winnerSprites = winner === 'P1' ? opts.sprites.altman : opts.sprites.dario;
-      const winSprite = new Sprite(winnerSprites.get('win'));
-      winSprite.anchor.set(0.5, 1);
-      const targetH = STAGE_HEIGHT * 0.75;
-      const scale = targetH / Math.max(winSprite.texture.height, 1);
-      winSprite.scale.set(winner === 'P2' ? -scale : scale, scale);
-      winSprite.x = STAGE_WIDTH * 0.27;
-      winSprite.y = STAGE_HEIGHT * 0.92;
-      this.addChild(winSprite);
+    // === Winner full pose (large) ===
+    if (winner !== 'draw') {
+      const path = winner === 'P1' ? '/sprites/scene/menu_altman.png' : '/sprites/scene/menu_dario.png';
+      try {
+        const tex = await Assets.load<Texture>(path);
+        this.winnerPose = new Sprite(tex);
+        const targetH = STAGE_HEIGHT * 0.92;
+        this.winnerPose.scale.set(targetH / tex.height);
+        this.winnerPose.anchor.set(0.5, 1);
+        this.winnerPose.x = STAGE_WIDTH * 0.30;
+        this.winnerPose.y = STAGE_HEIGHT - 8;
+        this.addChild(this.winnerPose);
+      } catch {
+        // fallback to win sprite from spriteset
+        if (opts.sprites) {
+          const winnerSprites = winner === 'P1' ? opts.sprites.altman : opts.sprites.dario;
+          this.winnerPose = new Sprite(winnerSprites.get('win'));
+          this.winnerPose.anchor.set(0.5, 1);
+          const targetH = STAGE_HEIGHT * 0.78;
+          const s = targetH / Math.max(this.winnerPose.texture.height, 1);
+          this.winnerPose.scale.set(winner === 'P2' ? -s : s, s);
+          this.winnerPose.x = STAGE_WIDTH * 0.30;
+          this.winnerPose.y = STAGE_HEIGHT - 8;
+          this.addChild(this.winnerPose);
+        }
+      }
     }
 
-    const reasonText = new Text({
-      text: opts.result.kind === 'ko' ? 'K.O.' : 'TIME OVER',
-      style: {
-        fontFamily: 'system-ui, Arial Black, sans-serif',
-        fontSize: 36,
-        fill: 0xfbbf24,
-        letterSpacing: 8,
-        fontWeight: '900',
-        stroke: { color: 0x000000, width: 5 },
-      },
-    });
-    reasonText.anchor.set(0.5);
-    reasonText.x = STAGE_WIDTH * 0.7;
-    reasonText.y = STAGE_HEIGHT * 0.27;
-    this.addChild(reasonText);
+    // === KO sprite (top center-right) ===
+    if (opts.result.kind === 'ko') {
+      try {
+        const tex = await Assets.load<Texture>('/sprites/vfx/ko_text.png');
+        const ko = new Sprite(tex);
+        ko.anchor.set(0.5);
+        const targetH = 220;
+        ko.scale.set(targetH / Math.max(tex.height, 1));
+        ko.x = STAGE_WIDTH * 0.7;
+        ko.y = STAGE_HEIGHT * 0.21;
+        this.addChild(ko);
+      } catch {
+        const t = new Text({
+          text: 'K.O.',
+          style: {
+            fontFamily: 'Impact, system-ui',
+            fontSize: 120,
+            fill: 0xff2222,
+            fontWeight: '900',
+            letterSpacing: 8,
+            stroke: { color: 0xffffff, width: 10 },
+          },
+        });
+        t.anchor.set(0.5);
+        t.x = STAGE_WIDTH * 0.7;
+        t.y = STAGE_HEIGHT * 0.21;
+        this.addChild(t);
+      }
+    } else {
+      const t = new Text({
+        text: 'TIME OVER',
+        style: {
+          fontFamily: 'Impact, system-ui',
+          fontSize: 70,
+          fill: 0xfbbf24,
+          letterSpacing: 8,
+          fontWeight: '900',
+          stroke: { color: 0x000000, width: 6 },
+          dropShadow: { color: 0x000000, blur: 6, distance: 4, alpha: 0.7 },
+        },
+      });
+      t.anchor.set(0.5);
+      t.x = STAGE_WIDTH * 0.7;
+      t.y = STAGE_HEIGHT * 0.21;
+      this.addChild(t);
+    }
 
-    const headline = new Text({
+    // === Background winner VFX (mushroom for Altman, stamp for Dario) ===
+    if (winner !== 'draw') {
+      const path = winner === 'P1'
+        ? '/sprites/vfx/mushroom_cloud.png'
+        : '/sprites/vfx/access_denied_stamp.png';
+      try {
+        const tex = await Assets.load<Texture>(path);
+        this.bgVfx = new Sprite(tex);
+        this.bgVfx.anchor.set(0.5);
+        this.bgVfx.scale.set(0.55);
+        this.bgVfx.x = STAGE_WIDTH * 0.78;
+        this.bgVfx.y = STAGE_HEIGHT * 0.5;
+        this.addChildAt(this.bgVfx, 1); // 放到 bg 之上、其他元素之下，不抢视线
+      } catch {
+        /* skip */
+      }
+    }
+
+    // === Winner headline ===
+    this.headlineText = new Text({
       text: lines.headline,
       style: {
-        fontFamily: 'system-ui, Arial Black, sans-serif',
+        fontFamily: 'Impact, system-ui',
         fontSize: 96,
         fill: accent,
         fontWeight: '900',
-        letterSpacing: 4,
-        stroke: { color: 0x000000, width: 7 },
+        letterSpacing: 6,
+        stroke: { color: 0x000000, width: 8 },
         dropShadow: {
           color: 0x000000,
-          blur: 8,
+          blur: 10,
           distance: 6,
           angle: Math.PI / 4,
-          alpha: 0.7,
+          alpha: 0.85,
         },
       },
     });
-    headline.anchor.set(0.5);
-    headline.x = STAGE_WIDTH * 0.7;
-    headline.y = STAGE_HEIGHT * 0.45;
-    this.addChild(headline);
+    this.headlineText.anchor.set(0.5);
+    this.headlineText.x = STAGE_WIDTH * 0.7;
+    this.headlineText.y = STAGE_HEIGHT * 0.46;
+    this.addChild(this.headlineText);
 
+    // 副标题（左侧装饰条）
+    const subBar = new Graphics()
+      .rect(STAGE_WIDTH * 0.5, STAGE_HEIGHT * 0.555, STAGE_WIDTH * 0.4, 4)
+      .fill(accent);
+    this.addChild(subBar);
+
+    // === Quote ===
     const quote = new Text({
       text: lines.quote,
       style: {
         fontFamily: 'system-ui',
-        fontSize: 26,
-        fill: 0xd4d4d8,
+        fontSize: 24,
+        fill: 0xe5e5e5,
         fontStyle: 'italic',
         wordWrap: true,
-        wordWrapWidth: STAGE_WIDTH * 0.5,
+        wordWrapWidth: STAGE_WIDTH * 0.42,
         align: 'center',
+        stroke: { color: 0x000000, width: 3 },
       },
     });
     quote.anchor.set(0.5);
     quote.x = STAGE_WIDTH * 0.7;
-    quote.y = STAGE_HEIGHT * 0.6;
+    quote.y = STAGE_HEIGHT * 0.62;
     this.addChild(quote);
 
-    const hint = new Text({
-      text: 'Enter / Space 返回菜单',
-      style: { fontFamily: 'system-ui', fontSize: 18, fill: 0x9ca3af, letterSpacing: 1 },
-    });
-    hint.anchor.set(0.5);
-    hint.x = STAGE_WIDTH / 2;
-    hint.y = STAGE_HEIGHT - 60;
-    this.addChild(hint);
+    // === Bottom 返回菜单 button ===
+    try {
+      const texMenu = await Assets.load<Texture>('/sprites/vfx/btn_menu.png');
+      const menu = new Sprite(texMenu);
+      menu.anchor.set(0.5);
+      menu.scale.set(100 / texMenu.height);
+      menu.x = STAGE_WIDTH / 2;
+      menu.y = STAGE_HEIGHT - 60;
+      this.addChild(menu);
+    } catch {
+      const hint = new Text({
+        text: 'ENTER / SPACE  返回菜单',
+        style: {
+          fontFamily: 'system-ui',
+          fontSize: 18,
+          fill: 0xfde68a,
+          letterSpacing: 3,
+          fontWeight: '600',
+        },
+      });
+      hint.anchor.set(0.5);
+      hint.x = STAGE_WIDTH / 2;
+      hint.y = STAGE_HEIGHT - 45;
+      this.addChild(hint);
+    }
   }
 
   update(_deltaMS: number): void {
+    this.elapsed += 1;
+    if (this.headlineText) {
+      // 标题脉动
+      const pulse = 1 + 0.04 * Math.sin(this.elapsed * 0.08);
+      this.headlineText.scale.set(pulse);
+    }
     if (this.cooldown > 0) {
       this.cooldown -= 1;
       return;
@@ -151,6 +273,7 @@ export class ResultScene extends Scene {
       this.input.wasPressed('Space') ||
       this.input.wasPressed('Escape')
     ) {
+      sfx.play('confirm');
       this.onContinue();
     }
   }
