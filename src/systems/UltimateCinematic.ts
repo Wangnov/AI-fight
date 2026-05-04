@@ -47,11 +47,20 @@ export class UltimateCinematic extends Container {
   update(): void {
     this.elapsed += 1;
 
-    // 黑屏节奏：前 30% 渐入到 0.7，后 30% 渐出到 0
-    const t = this.elapsed / this.totalFrames;
-    if (t < 0.3) this.dark.alpha = (t / 0.3) * 0.7;
-    else if (t > 0.7) this.dark.alpha = Math.max(0, 0.7 * (1 - (t - 0.7) / 0.3));
-    else this.dark.alpha = 0.7;
+    // 黑屏节奏：character 动作期间屏幕清晰，VFX 阶段才渐黑
+    const charPhaseEnd = this.spec === 'altman' ? 90 : 150;
+    const fadeInDur = 30;
+    const fadeOutDur = 30;
+    const fadeOutStart = this.totalFrames - fadeOutDur;
+    if (this.elapsed < charPhaseEnd) {
+      this.dark.alpha = 0;
+    } else if (this.elapsed < charPhaseEnd + fadeInDur) {
+      this.dark.alpha = ((this.elapsed - charPhaseEnd) / fadeInDur) * 0.7;
+    } else if (this.elapsed < fadeOutStart) {
+      this.dark.alpha = 0.7;
+    } else {
+      this.dark.alpha = Math.max(0, 0.7 * (1 - (this.elapsed - fadeOutStart) / fadeOutDur));
+    }
 
     // 时间轴 spawn
     if (this.spec === 'altman') this.tickAltman();
@@ -75,6 +84,33 @@ export class UltimateCinematic extends Container {
     return this.elapsed >= this.totalFrames;
   }
 
+  /** BattleScene 用来按时间轴切换 attacker character pose */
+  getElapsed(): number {
+    return this.elapsed;
+  }
+  getTotalFrames(): number {
+    return this.totalFrames;
+  }
+  /**
+   * 当前 character pose 阶段帧 key。
+   * Phase 1（前 ~40%）：character 动作完整演出
+   * Phase 2（后 ~60%）：character 保持 recover pose，VFX 接管演出
+   */
+  getCharacterPhaseKey(): string {
+    if (this.spec === 'altman') {
+      // 前 120 帧 character 4 阶段 (each 30f = 0.5s)
+      if (this.elapsed < 30) return 'sit_down';
+      if (this.elapsed < 60) return 'lean_back';
+      if (this.elapsed < 90) return 'burst';
+      return 'recover'; // 90+ recover hold during VFX
+    } else {
+      // 前 150 帧 character 3 阶段 (each 50f ≈ 0.83s)
+      if (this.elapsed < 50) return 'judge_pose';
+      if (this.elapsed < 100) return 'slam';
+      return 'recover'; // 100+ hold during VFX
+    }
+  }
+
   // === Altman 时间轴：5 秒 = 300 帧（史诗节奏）===
   private altmanFiredEvents = new Set<string>();
   private tickAltman(): void {
@@ -84,59 +120,36 @@ export class UltimateCinematic extends Container {
         fn();
       }
     };
-    if (this.elapsed === 10) {
+    // Phase 2 events (character anim 在 0-120 frames 完成后开始)
+    if (this.elapsed === 130) {
       fire('quote1', () =>
-        this.spawnSubtitle('"我只是问了一个问题……"', STAGE_HEIGHT * 0.35, 30, 0xffffff, 80)
+        this.spawnSubtitle('"我只是问了一个问题……"', STAGE_HEIGHT * 0.35, 30, 0xffffff, 70)
       );
     }
-    if (this.elapsed === 70) {
+    if (this.elapsed === 160) {
       fire('chair', () => this.spawnChair());
     }
-    if (this.elapsed === 120) {
+    if (this.elapsed === 200) {
       fire('headline', () =>
-        this.spawnHeadline(
-          'OH MAN...\nHERE IT IS.',
-          STAGE_HEIGHT * 0.42,
-          82,
-          0x4ade80,
-          120
-        )
+        this.spawnHeadline('OH MAN...\nHERE IT IS.', STAGE_HEIGHT * 0.42, 82, 0x4ade80, 90)
       );
     }
-    if (this.elapsed === 130) {
+    if (this.elapsed === 210) {
       fire('subtext', () =>
-        this.spawnSubtitle(
-          '"人类突然显得有点多余。"',
-          STAGE_HEIGHT * 0.66,
-          24,
-          0xa7f3d0,
-          110
-        )
+        this.spawnSubtitle('"人类突然显得有点多余。"', STAGE_HEIGHT * 0.66, 24, 0xa7f3d0, 80)
       );
     }
-    if (this.elapsed === 220) {
+    if (this.elapsed === 250) {
       fire('flash', () => this.spawnFullscreenFlash(0xffffff, 14));
       fire('shockwave', () => this.spawnShockwave());
       fire('mushroom', () => this.spawnMushroom());
       fire('hitText', () =>
-        this.spawnHeadline(
-          'WHAT HAVE\nWE SHIPPED?!',
-          STAGE_HEIGHT * 0.4,
-          64,
-          0xfacc15,
-          70
-        )
+        this.spawnHeadline('WHAT HAVE\nWE SHIPPED?!', STAGE_HEIGHT * 0.4, 64, 0xfacc15, 50)
       );
     }
-    if (this.elapsed === 270) {
+    if (this.elapsed === 280) {
       fire('outro', () =>
-        this.spawnSubtitle(
-          '"Anyway, we have a lot to show you."',
-          STAGE_HEIGHT * 0.5,
-          28,
-          0xffffff,
-          50
-        )
+        this.spawnSubtitle('"Anyway, we have a lot to show you."', STAGE_HEIGHT * 0.5, 28, 0xffffff, 20)
       );
     }
   }
@@ -150,50 +163,38 @@ export class UltimateCinematic extends Container {
         fn();
       }
     };
-    if (this.elapsed === 5) {
+    // Phase 2 events (character anim 0-150 frames 完成后开始)
+    if (this.elapsed === 160) {
       fire('cathedral', () => this.spawnCathedral());
     }
-    if (this.elapsed === 30) {
+    if (this.elapsed === 175) {
       fire('headline1', () =>
-        this.spawnSubtitle(
-          '"Identity Verification Required."',
-          STAGE_HEIGHT * 0.3,
-          32,
-          0xfb923c,
-          80
-        )
+        this.spawnSubtitle('"Identity Verification Required."', STAGE_HEIGHT * 0.3, 32, 0xfb923c, 70)
       );
     }
-    // KYC 三步弹窗：每步显示 70 帧 ≈ 1.17s 让玩家看清
-    if (this.elapsed === 100) {
-      fire('kyc1', () => this.spawnKYC(1, 70));
+    if (this.elapsed === 200) {
+      fire('kyc1', () => this.spawnKYC(1, 60));
     }
-    if (this.elapsed === 165) {
-      fire('kyc2', () => this.spawnKYC(2, 70));
+    if (this.elapsed === 240) {
+      fire('kyc2', () => this.spawnKYC(2, 60));
     }
-    if (this.elapsed === 230) {
-      fire('kyc3', () => this.spawnKYC(3, 70));
+    if (this.elapsed === 280) {
+      fire('kyc3', () => this.spawnKYC(3, 60));
     }
-    if (this.elapsed === 295) {
+    if (this.elapsed === 330) {
       fire('flash', () => this.spawnFullscreenFlash(0xfb923c, 10));
       fire('pillar', () => this.spawnOrangePillar());
       fire('stamp', () => this.spawnAccessDeniedStamp());
       fire('miniStamps', () => this.spawnMiniStamps());
     }
-    if (this.elapsed === 310) {
+    if (this.elapsed === 345) {
       fire('hitText', () =>
-        this.spawnHeadline(
-          'YOU WERE NOT SELECTED\nBY CLAUDE.',
-          STAGE_HEIGHT * 0.4,
-          54,
-          0xff6b6b,
-          70
-        )
+        this.spawnHeadline('YOU WERE NOT SELECTED\nBY CLAUDE.', STAGE_HEIGHT * 0.4, 54, 0xff6b6b, 35)
       );
     }
-    if (this.elapsed === 350) {
+    if (this.elapsed === 365) {
       fire('outro', () =>
-        this.spawnSubtitle('"For your safety."', STAGE_HEIGHT * 0.5, 28, 0xffffff, 30)
+        this.spawnSubtitle('"For your safety."', STAGE_HEIGHT * 0.5, 28, 0xffffff, 15)
       );
     }
   }

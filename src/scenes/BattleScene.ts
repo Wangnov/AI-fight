@@ -28,6 +28,7 @@ import { AIController } from '../systems/AIController';
 import { HUD } from '../ui/HUD';
 import type { SpriteSet } from '../assets/SpriteSet';
 import { HitEffectsLayer } from '../systems/HitEffectsLayer';
+import { sfx } from '../systems/SoundManager';
 import { UltimateCinematic } from '../systems/UltimateCinematic';
 
 export type BattleMode = 'pvp' | 'pve';
@@ -76,6 +77,10 @@ export class BattleScene extends Scene {
   private cinematic: UltimateCinematic | null = null;
   private cinematicAttackerId: 'P1' | 'P2' | null = null;
   private cinematicDamageDealt = false;
+
+  // 开场倒计时（3 → 2 → 1 → FIGHT!）冻结战斗
+  private countdownFrames = 240; // 总长 4 秒 (60 fps × 4)
+  private countdownText: Text | null = null;
 
   constructor(opts: BattleSceneOptions) {
     super();
@@ -202,9 +207,70 @@ export class BattleScene extends Scene {
     hint.x = STAGE_WIDTH / 2;
     hint.y = STAGE_HEIGHT - 8;
     this.addChild(hint);
+
+    // === 开场倒计时大字 ===
+    this.countdownText = new Text({
+      text: '3',
+      style: {
+        fontFamily: 'Impact, system-ui',
+        fontSize: 280,
+        fontWeight: 'bold',
+        fill: 0xff4444,
+        stroke: { color: 0xffffff, width: 12 },
+        align: 'center',
+        dropShadow: { color: 0x000000, blur: 8, distance: 6, alpha: 0.6 },
+      },
+    });
+    this.countdownText.anchor.set(0.5);
+    this.countdownText.x = STAGE_WIDTH / 2;
+    this.countdownText.y = STAGE_HEIGHT / 2;
+    this.addChild(this.countdownText);
+  }
+
+  /** 倒计时阶段：每秒 60 帧 — 0-60: "3", 60-120: "2", 120-180: "1", 180-240: "FIGHT!" */
+  private updateCountdown(): boolean {
+    if (this.countdownFrames <= 0) return false;
+    this.countdownFrames -= 1;
+    const frame = 240 - this.countdownFrames;
+    // 每段开始时触发音效
+    if (frame === 1) sfx.play('beep');
+    else if (frame === 60) sfx.play('beep');
+    else if (frame === 120) sfx.play('beep');
+    else if (frame === 180) sfx.play('fight');
+    let text = '3';
+    let fill = 0xff4444;
+    if (frame < 60) { text = '3'; fill = 0xff4444; }
+    else if (frame < 120) { text = '2'; fill = 0xffa544; }
+    else if (frame < 180) { text = '1'; fill = 0xffff44; }
+    else { text = 'FIGHT!'; fill = 0xff2222; }
+    if (this.countdownText) {
+      if (this.countdownText.text !== text) this.countdownText.text = text;
+      this.countdownText.style.fill = fill;
+      // 入场弹缩 + 出场缩小
+      const local = frame % 60;
+      const t = local / 60;
+      let scale = 1.0;
+      if (t < 0.3) scale = 0.5 + t * 1.67; // 0.5→1.0
+      else if (t > 0.7) scale = 1.0 - (t - 0.7) * 0.8; // 1.0→0.76
+      this.countdownText.scale.set(scale);
+      this.countdownText.alpha = t > 0.85 ? Math.max(0, 1 - (t - 0.85) / 0.15) : 1;
+    }
+    if (this.countdownFrames === 0 && this.countdownText) {
+      this.removeChild(this.countdownText);
+      this.countdownText.destroy();
+      this.countdownText = null;
+    }
+    return true;
   }
 
   update(deltaMS: number): void {
+    // === 开场倒计时：冻结战斗 + 不推进时间 ===
+    if (this.updateCountdown()) {
+      this.hud.update(this.timeLeftMS / 1000);
+      this.aiInput?.endFrame();
+      return;
+    }
+
     if (!this.ended) {
       this.timeLeftMS -= deltaMS;
     }
@@ -212,12 +278,22 @@ export class BattleScene extends Scene {
     // === 大招分镜：独立时间轴，期间不推进战斗也不接受输入 ===
     if (this.cinematic) {
       this.cinematic.update();
+      // 按 cinematic 时间轴 force attacker character pose 阶段帧
+      if (this.cinematicAttackerId) {
+        const attacker = this.cinematicAttackerId === 'P1' ? this.p1 : this.p2;
+        attacker.setForcedFrame(this.cinematic.getCharacterPhaseKey());
+      }
       // 在分镜中段（约 60% 进度）应用大招伤害一次
       if (!this.cinematicDamageDealt && this.cinematic.isDone()) {
         this.applyUltimateImpact();
         this.cinematicDamageDealt = true;
       }
       if (this.cinematic.isDone()) {
+        // 清除 attacker forced frame
+        if (this.cinematicAttackerId) {
+          const attacker = this.cinematicAttackerId === 'P1' ? this.p1 : this.p2;
+          attacker.setForcedFrame(null);
+        }
         this.removeChild(this.cinematic);
         this.cinematic.destroy({ children: true });
         this.cinematic = null;
@@ -296,6 +372,7 @@ export class BattleScene extends Scene {
     if (!this.ended) {
       if (!this.p1.isAlive() || !this.p2.isAlive()) {
         this.ended = true;
+        sfx.play('ko');
         const winnerId =
           !this.p1.isAlive() && !this.p2.isAlive()
             ? this.p1.hp >= this.p2.hp
@@ -336,6 +413,7 @@ export class BattleScene extends Scene {
   }
 
   private startCinematic(attackerId: 'P1' | 'P2'): void {
+    sfx.play('ultimate');
     if (!this.vfxSprites) return;
     const attacker = attackerId === 'P1' ? this.p1 : this.p2;
     const spec = attacker.preset.name === 'ALTMAN' ? 'altman' : 'dario';
