@@ -21,6 +21,13 @@ const ITEMS: MenuItem[] = [
   { label: '双人对战  PvP', mode: 'pvp', desc: '本地双人 · 键盘对战' },
   { label: '人机对战  PvE', mode: 'pve', desc: '挑战 AI · 单人模式' },
 ];
+const MENU_BUTTON_HEIGHT = 88;
+
+interface MenuPose {
+  sprite: Sprite;
+  baseY: number;
+  phase: number;
+}
 
 export class MenuScene extends Scene {
   private readonly input: InputManager;
@@ -30,8 +37,7 @@ export class MenuScene extends Scene {
   private elapsed = 0;
   // refs for animation
   private titleSprite: Sprite | null = null;
-  private leftPose: Sprite | null = null;
-  private rightPose: Sprite | null = null;
+  private characterPoses: MenuPose[] = [];
   private overlayLight: Graphics | null = null;
   private subtitleZh: Text | null = null;
 
@@ -71,31 +77,7 @@ export class MenuScene extends Scene {
       const bg = new Graphics().rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT).fill(0x0b0d12);
       this.addChild(bg);
     }
-    // === Layer 2: Character full poses — 在 title 下方，缩小到 head 不进入 title 区域 ===
-    try {
-      const tex = await Assets.load<Texture>('/sprites/scene/menu_altman.png');
-      this.leftPose = new Sprite(tex);
-      const targetH = STAGE_HEIGHT * 0.66; // 0.66*720=475，top y=233 — title bottom 212 下方
-      this.leftPose.scale.set(targetH / tex.height);
-      this.leftPose.anchor.set(0.5, 1);
-      this.leftPose.x = STAGE_WIDTH * 0.16;
-      this.leftPose.y = STAGE_HEIGHT - 6;
-      this.addChild(this.leftPose);
-    } catch {
-      /* skip */
-    }
-    try {
-      const tex = await Assets.load<Texture>('/sprites/scene/menu_dario.png');
-      this.rightPose = new Sprite(tex);
-      const targetH = STAGE_HEIGHT * 0.66;
-      this.rightPose.scale.set(targetH / tex.height);
-      this.rightPose.anchor.set(0.5, 1);
-      this.rightPose.x = STAGE_WIDTH * 0.84;
-      this.rightPose.y = STAGE_HEIGHT - 6;
-      this.addChild(this.rightPose);
-    } catch {
-      /* skip */
-    }
+    await this.spawnCharacterLineup();
 
     // === Layer 3: Title banner (top, super-wide) — 永远在最上层 ===
     try {
@@ -145,16 +127,14 @@ export class MenuScene extends Scene {
     // === Layer 4: Mode select buttons (中文按钮素材，横向 wide pill) ===
     const buttonSprites: Sprite[] = [];
     const btnPaths = ['/sprites/vfx/btn_pvp.png', '/sprites/vfx/btn_pve.png'];
-    const btnY0 = STAGE_HEIGHT * 0.62;
-    const btnTargetH = 110;
     for (let i = 0; i < ITEMS.length; i++) {
       try {
         const tex = await Assets.load<Texture>(btnPaths[i]);
         const btn = new Sprite(tex);
         btn.anchor.set(0.5);
-        btn.scale.set(btnTargetH / tex.height);
-        btn.x = STAGE_WIDTH / 2;
-        btn.y = btnY0 + i * (btnTargetH + 20);
+        btn.scale.set(MENU_BUTTON_HEIGHT / tex.height);
+        btn.x = STAGE_WIDTH / 2 + (i === 0 ? -210 : 210);
+        btn.y = STAGE_HEIGHT - 88;
         this.addChild(btn);
         buttonSprites.push(btn);
       } catch {
@@ -165,7 +145,7 @@ export class MenuScene extends Scene {
 
     // 操作提示
     const hint = new Text({
-      text: '↑↓ / W S 选择    ENTER / SPACE 开始    ·    AI Fight v1.0',
+      text: '←→ / ↑↓ / W S 选择    ENTER / SPACE 开始    ·    AI Fight v1.0',
       style: {
         fontFamily: 'system-ui',
         fontSize: 13,
@@ -190,9 +170,9 @@ export class MenuScene extends Scene {
     this.elapsed += 1;
 
     // 角色轻微浮动 + 标题脉动
-    const float = Math.sin(this.elapsed * 0.04) * 4;
-    if (this.leftPose) this.leftPose.y = STAGE_HEIGHT - 12 + float;
-    if (this.rightPose) this.rightPose.y = STAGE_HEIGHT - 12 - float;
+    this.characterPoses.forEach((pose) => {
+      pose.sprite.y = pose.baseY + Math.sin(this.elapsed * 0.04 + pose.phase) * 4;
+    });
     if (this.titleSprite) {
       const pulse = 1 + 0.018 * Math.sin(this.elapsed * 0.06);
       this.titleSprite.scale.set((220 / this.titleSprite.texture.height) * pulse);
@@ -203,16 +183,16 @@ export class MenuScene extends Scene {
     // 选中按钮微微弹缩
     this.itemSprites.forEach((s, i) => {
       const active = i === this.selected;
-      const baseScale = 110 / s.texture.height;
+      const baseScale = MENU_BUTTON_HEIGHT / s.texture.height;
       s.scale.set(active ? baseScale * (1 + 0.04 * Math.sin(this.elapsed * 0.12)) : baseScale);
     });
 
-    if (this.input.wasPressed('ArrowUp') || this.input.wasPressed('KeyW')) {
+    if (this.input.wasPressed('ArrowUp') || this.input.wasPressed('ArrowLeft') || this.input.wasPressed('KeyW')) {
       this.selected = (this.selected - 1 + ITEMS.length) % ITEMS.length;
       sfx.play('select');
       this.refresh();
     }
-    if (this.input.wasPressed('ArrowDown') || this.input.wasPressed('KeyS')) {
+    if (this.input.wasPressed('ArrowDown') || this.input.wasPressed('ArrowRight') || this.input.wasPressed('KeyS')) {
       this.selected = (this.selected + 1) % ITEMS.length;
       sfx.play('select');
       this.refresh();
@@ -228,5 +208,28 @@ export class MenuScene extends Scene {
       const active = i === this.selected;
       s.alpha = active ? 1.0 : 0.55;
     });
+  }
+
+  private async spawnCharacterLineup(): Promise<void> {
+    const poses = [
+      { path: '/sprites/scene/menu_altman.png', x: STAGE_WIDTH * 0.17, targetH: STAGE_HEIGHT * 0.64, phase: 0 },
+      { path: '/sprites/scene/menu_elon.png', x: STAGE_WIDTH * 0.50, targetH: STAGE_HEIGHT * 0.66, phase: 1.4 },
+      { path: '/sprites/scene/menu_dario.png', x: STAGE_WIDTH * 0.83, targetH: STAGE_HEIGHT * 0.64, phase: 2.8 },
+    ];
+
+    for (const pose of poses) {
+      try {
+        const tex = await Assets.load<Texture>(pose.path);
+        const sprite = new Sprite(tex);
+        sprite.scale.set(pose.targetH / tex.height);
+        sprite.anchor.set(0.5, 1);
+        sprite.x = pose.x;
+        sprite.y = STAGE_HEIGHT - 8;
+        this.addChild(sprite);
+        this.characterPoses.push({ sprite, baseY: sprite.y, phase: pose.phase });
+      } catch {
+        /* skip missing pose */
+      }
+    }
   }
 }
