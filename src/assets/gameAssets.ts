@@ -20,8 +20,6 @@ const MENU_ASSET_PATHS = [
   '/sprites/vfx/btn_menu.png',
   '/sprites/vfx/btn_pve.png',
   '/sprites/vfx/btn_pvp.png',
-  '/sprites/vfx/btn_start.png',
-  '/sprites/vfx/text_choose.png',
   '/sprites/vfx/text_vs.png',
 ] as const;
 

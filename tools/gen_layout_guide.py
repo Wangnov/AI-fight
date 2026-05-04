@@ -11,7 +11,7 @@ prompt 要明确说"this guide is layout-only, do not draw the boxes/lines into 
 用法:
     python tools/gen_layout_guide.py walk 4 768 1024
         生成 walk row 4 帧布局图，cell 768x1024，输出到
-        public/sprites/_layout-guides/walk.png
+        tools/layout_guides/walk.png
 """
 
 import sys
@@ -19,7 +19,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-GUIDE_DIR = PROJECT_ROOT / "public" / "sprites" / "_layout-guides"
+GUIDE_DIR = PROJECT_ROOT / "tools" / "layout_guides"
 
 SAFE_MARGIN_X = 60
 SAFE_MARGIN_Y = 80

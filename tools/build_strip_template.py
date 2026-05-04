@@ -10,7 +10,7 @@ AI 看到"layout 网格 + 每 slot 已经是 base 角色"，只需要 pose-edit 
 用法:
     python tools/build_strip_template.py \\
         --base public/sprites/altman/altman_idle_01.png \\
-        --layout public/sprites/_layout-guides/walk.png \\
+        --layout tools/layout_guides/walk.png \\
         --frames 4 --cell-w 768 --cell-h 1024 \\
         --out /tmp/altman_walk_template.png
 """

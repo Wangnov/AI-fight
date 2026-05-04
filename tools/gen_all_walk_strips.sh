@@ -15,7 +15,7 @@ python3 "$ROOT/tools/gen_layout_guide.py" walk_strip 2 1024 1024
 for char in altman dario; do
   python3 "$ROOT/tools/build_strip_template.py" \
     --base "$ROOT/public/sprites/$char/${char}_idle_01.png" \
-    --layout "$ROOT/public/sprites/_layout-guides/walk_strip.png" \
+    --layout "$ROOT/tools/layout_guides/walk_strip.png" \
     --frames 2 --cell-w 1024 --cell-h 1024 \
     --out "/tmp/${char}_walk_template.png"
 done
