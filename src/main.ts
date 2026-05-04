@@ -117,7 +117,12 @@ import {
         input,
         result,
         sprites: assets
-          ? { altman: assets.altman, dario: assets.dario, bgArena: assets.bgArena }
+          ? {
+              altman: assets.altman,
+              dario: assets.dario,
+              elon: assets.elon,
+              bgArena: assets.bgArena,
+            }
           : undefined,
         onContinue: () => showMenu(),
       })

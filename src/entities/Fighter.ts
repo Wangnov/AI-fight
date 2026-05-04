@@ -31,6 +31,7 @@ import type { AABB, AttackKind, FighterId } from '../types';
 import type { SpriteSet } from '../assets/SpriteSet';
 import type { FrameKey } from '../assets/spriteFrames';
 import { WALK_CYCLE_KEYS } from '../assets/spriteFrames';
+import { MOVE_SETS } from '../config/moveSets';
 
 const SPRITE_DISPLAY_HEIGHT = 380; // 角色 sprite 显示高度
 
@@ -258,7 +259,7 @@ export class Fighter extends Container {
       const startup = a.data.startup;
       const active = a.data.active;
       const totalNonRecovery = startup + active;
-      const isAltman = this.preset.name === 'ALTMAN';
+      const moveSet = MOVE_SETS[this.preset.moveSetId];
 
       if (a.kind === 'jab') {
         if (a.frame < startup) return 'jab_01';
@@ -269,32 +270,24 @@ export class Fighter extends Container {
       if (a.kind === 'combo1') {
         // 组合技 1：投射物。startup 蓄力 → release 投出
         if (a.frame < startup) {
-          return isAltman ? 'codex_cast' : 'mythos_cast';
+          return moveSet.combo1.startupFrame;
         }
-        return isAltman ? 'codex_throw' : 'mythos_release';
+        return moveSet.combo1.releaseFrame;
       }
 
       if (a.kind === 'combo2') {
         // 组合技 2：近战重击。startup 蓄力 → 挥出
         if (a.frame < startup) {
-          return isAltman ? 'benchmark_windup' : 'constitution_cast';
+          return moveSet.combo2.startupFrame;
         }
-        return isAltman ? 'benchmark_swing' : 'constitution_swing';
+        return moveSet.combo2.activeFrame;
       }
 
       if (a.kind === 'ultimate') {
-        // 大招分阶段（Altman 4 阶段, Dario 3 阶段）— 按 frame 进度切贴图
+        // 大招分阶段 — 按 frame 进度切贴图
         const total = startup + active + a.data.recovery;
         const phase = a.frame / Math.max(total, 1);
-        if (isAltman) {
-          if (phase < 0.25) return 'sit_down';
-          if (phase < 0.5) return 'lean_back';
-          if (phase < 0.75) return 'burst';
-          return 'recover';
-        }
-        if (phase < 0.4) return 'judge_pose';
-        if (phase < 0.7) return 'slam';
-        return 'recover';
+        return moveSet.ultimate.phases.find((item) => phase < item.until)?.frame ?? 'recover';
       }
     }
 
@@ -330,9 +323,9 @@ export class Fighter extends Container {
     this.vfxSet = vfx;
   }
 
-  /** 投射物用的 vfx 贴图 key（按角色分配）— Altman 抛 PR 文件夹，Dario 抛漏洞碎片 */
+  /** 投射物用的 vfx 贴图 key（按角色 move set 分配） */
   getProjectileVfxKey(): string {
-    return this.preset.name === 'ALTMAN' ? 'pr_folder' : 'vulnerability_shard';
+    return MOVE_SETS[this.preset.moveSetId].combo1.vfxKey;
   }
 
   /** BattleScene 调：检测大招触发（仅在新进入 ultimate 后第一次返回 true） */

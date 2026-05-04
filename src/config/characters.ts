@@ -1,10 +1,11 @@
 import {
   PRESET_ALTMAN,
   PRESET_DARIO,
+  PRESET_ELON,
   type FighterPreset,
 } from './constants';
 
-export type CharacterId = 'altman' | 'dario';
+export type CharacterId = 'altman' | 'dario' | 'elon';
 
 export interface CharacterDefinition {
   id: CharacterId;
@@ -36,6 +37,14 @@ export const CHARACTER_ROSTER: readonly CharacterDefinition[] = [
     color: 0xfb923c,
     accentColor: 0xf97316,
     preset: PRESET_DARIO,
+  },
+  {
+    id: 'elon',
+    name: 'ELON MASK',
+    portraitPath: '/sprites/scene/portrait_elon.png',
+    color: 0x60a5fa,
+    accentColor: 0xa78bfa,
+    preset: PRESET_ELON,
   },
 ];
 

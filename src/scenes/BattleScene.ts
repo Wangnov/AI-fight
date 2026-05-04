@@ -33,6 +33,7 @@ import type { SpriteSet } from '../assets/SpriteSet';
 import { CombatFeedbackLayer } from '../systems/CombatFeedbackLayer';
 import { sfx } from '../systems/SoundManager';
 import { UltimateCinematic } from '../systems/UltimateCinematic';
+import { MOVE_SETS } from '../config/moveSets';
 
 export type BattleMode = 'pvp' | 'pve';
 export type BattleResult =
@@ -45,6 +46,7 @@ export interface BattleSceneOptions {
   sprites?: {
     altman: SpriteSet;
     dario: SpriteSet;
+    elon: SpriteSet;
     vfx: SpriteSet;
     bgArena: Texture;
   };
@@ -152,6 +154,7 @@ export class BattleScene extends Scene {
       const fighterSprites: CharacterSpriteSets = {
         altman: opts.sprites.altman,
         dario: opts.sprites.dario,
+        elon: opts.sprites.elon,
       };
       this.p1.setSpriteSet(fighterSprites[p1Character.id]);
       this.p2.setSpriteSet(fighterSprites[p2Character.id]);
@@ -473,7 +476,7 @@ export class BattleScene extends Scene {
     sfx.play('ultimate');
     if (!this.vfxSprites) return;
     const attacker = attackerId === 'P1' ? this.p1 : this.p2;
-    const spec = attacker.preset.name === 'ALTMAN' ? 'altman' : 'dario';
+    const spec = MOVE_SETS[attacker.preset.moveSetId].ultimate.spec;
     this.cinematic = new UltimateCinematic(this.vfxSprites, spec);
     this.cinematicAttackerId = attackerId;
     this.cinematicDamageDealt = false;

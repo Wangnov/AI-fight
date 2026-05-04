@@ -3,6 +3,8 @@
  * Phase 1 灰盒可打的所有可调参数集中在此
  */
 
+import type { MoveSetId } from './moveSets';
+
 // === 画布与世界 ===
 export const STAGE_WIDTH = 1280;
 export const STAGE_HEIGHT = 720;
@@ -154,6 +156,8 @@ export const ALTMAN_COLOR = 0x4ade80; // ChatGPT 青绿
 export const ALTMAN_PROJECTILE_COLOR = 0x22d3ee;
 export const DARIO_COLOR = 0xfb923c; // Claude 橙
 export const DARIO_PROJECTILE_COLOR = 0xc084fc;
+export const ELON_COLOR = 0x60a5fa; // Elon Mask 电蓝
+export const ELON_PROJECTILE_COLOR = 0xa78bfa;
 export const HITBOX_DEBUG_COLOR = 0xff0000;
 export const HP_BG_COLOR = 0x222226;
 export const HP_FILL_COLOR_P1 = 0x4ade80;
@@ -204,6 +208,7 @@ export const KEYS_P2: KeyMap = {
 // === 角色预设 ===
 export interface FighterPreset {
   name: string;
+  moveSetId: MoveSetId;
   bodyColor: number;
   projectileColor: number;
   hpFillColor: number;
@@ -214,6 +219,7 @@ export interface FighterPreset {
 
 export const PRESET_ALTMAN: FighterPreset = {
   name: 'ALTMAN',
+  moveSetId: 'altman',
   bodyColor: ALTMAN_COLOR,
   projectileColor: ALTMAN_PROJECTILE_COLOR,
   hpFillColor: HP_FILL_COLOR_P1,
@@ -224,12 +230,24 @@ export const PRESET_ALTMAN: FighterPreset = {
 
 export const PRESET_DARIO: FighterPreset = {
   name: 'DARIO',
+  moveSetId: 'dario',
   bodyColor: DARIO_COLOR,
   projectileColor: DARIO_PROJECTILE_COLOR,
   hpFillColor: HP_FILL_COLOR_P2,
   energyFillColor: ENERGY_FILL_COLOR_P2,
   energyLabel: 'SAFETY',
   facingRight: false,
+};
+
+export const PRESET_ELON: FighterPreset = {
+  name: 'ELON MASK',
+  moveSetId: 'elon',
+  bodyColor: ELON_COLOR,
+  projectileColor: ELON_PROJECTILE_COLOR,
+  hpFillColor: ELON_COLOR,
+  energyFillColor: ELON_PROJECTILE_COLOR,
+  energyLabel: 'ORBIT',
+  facingRight: true,
 };
 
 // === 角色起始位置 ===

@@ -19,6 +19,10 @@ export const VFX_KEYS = [
   'mythos_gate',
   'vulnerability_shard',
   'constitution_pages',
+  // Elon 招式
+  'satellite_packet',
+  'electric_orbit',
+  'rocket_plume',
   // Altman 大招
   'chair',
   'shockwave',

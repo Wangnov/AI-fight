@@ -14,7 +14,7 @@ import {
 export interface ResultSceneOptions {
   input: InputManager;
   result: BattleResult;
-  sprites?: { altman: SpriteSet; dario: SpriteSet; bgArena: Texture };
+  sprites?: Record<CharacterId, SpriteSet> & { bgArena: Texture };
   onContinue: () => void;
 }
 
@@ -27,6 +27,7 @@ const DRAW_COLOR = 0xa1a1aa;
 const CHARACTER_WIN_QUOTES: Record<CharacterId, string> = {
   altman: '"Anyway, we have a lot to show you."',
   dario: '"Your defeat has been safety-audited."',
+  elon: '"Anyway, it was a successful test."',
 };
 
 export class ResultScene extends Scene {
@@ -111,9 +112,7 @@ export class ResultScene extends Scene {
       } catch {
         // fallback to win sprite from spriteset
         if (opts.sprites) {
-          const winnerSprites = winnerCharacter.id === 'altman'
-            ? opts.sprites.altman
-            : opts.sprites.dario;
+          const winnerSprites = opts.sprites[winnerCharacter.id];
           this.winnerPose = new Sprite(winnerSprites.get('win'));
           this.winnerPose.anchor.set(0.5, 1);
           const targetH = STAGE_HEIGHT * 0.78;
@@ -173,11 +172,13 @@ export class ResultScene extends Scene {
       this.addChild(t);
     }
 
-    // === Background winner VFX (mushroom for Altman, stamp for Dario) ===
+    // === Background winner VFX ===
     if (winner !== 'draw' && winnerCharacter) {
       const path = winnerCharacter.id === 'altman'
         ? '/sprites/vfx/mushroom_cloud.png'
-        : '/sprites/vfx/access_denied_stamp.png';
+        : winnerCharacter.id === 'dario'
+          ? '/sprites/vfx/access_denied_stamp.png'
+          : '/sprites/vfx/rocket_plume.png';
       try {
         const tex = await Assets.load<Texture>(path);
         this.bgVfx = new Sprite(tex);

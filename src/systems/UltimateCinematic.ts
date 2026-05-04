@@ -1,6 +1,7 @@
 import { Container, Graphics, Sprite, Text } from 'pixi.js';
 import type { SpriteSet } from '../assets/SpriteSet';
 import { STAGE_HEIGHT, STAGE_WIDTH } from '../config/constants';
+import type { UltimateSpec } from '../config/moveSets';
 
 interface CinematicElement {
   obj: Container;
@@ -8,8 +9,6 @@ interface CinematicElement {
   expire: number;
   tick?: (age: number, total: number) => void;
 }
-
-export type UltimateSpec = 'altman' | 'dario';
 
 /**
  * 大招分镜演出（独立于 Fighter attack 计时）。
@@ -21,6 +20,9 @@ export type UltimateSpec = 'altman' | 'dario';
  * KYC 弹窗 step1/2/3 → 红章降临 + 光柱 + mini 红章雨 →
  * "YOU WERE NOT SELECTED BY CLAUDE." → "For your safety." 收招。
  * 240 帧 ≈ 4 秒。
+ *
+ * Elon Mask"Orbit Launch"：黑屏 + 轨道电光 → keynote pose →
+ * countdown → rocket plume + screen lines → 收起遥控器。
  *
  * BattleScene 在大招期间冻结 fighter 物理 + AI，仅推进 cinematic。
  */
@@ -35,11 +37,11 @@ export class UltimateCinematic extends Container {
     private readonly spec: UltimateSpec
   ) {
     super();
-    // 延长以达成 KOF 级史诗感：Altman 5s, Dario 6.3s
-    this.totalFrames = spec === 'altman' ? 300 : 380;
+    // 延长以达成 KOF 级史诗感：Altman 5s, Dario 6.3s, Elon 5.7s
+    this.totalFrames = spec === 'altman' ? 300 : spec === 'dario' ? 380 : 340;
     this.dark = new Graphics()
       .rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT)
-      .fill(spec === 'altman' ? 0x000000 : 0x180b25);
+      .fill(spec === 'altman' ? 0x000000 : spec === 'dario' ? 0x180b25 : 0x050b1a);
     this.dark.alpha = 0;
     this.addChild(this.dark);
   }
@@ -48,7 +50,7 @@ export class UltimateCinematic extends Container {
     this.elapsed += 1;
 
     // 黑屏节奏：character 动作期间屏幕清晰，VFX 阶段才渐黑
-    const charPhaseEnd = this.spec === 'altman' ? 90 : 150;
+    const charPhaseEnd = this.spec === 'altman' ? 90 : this.spec === 'dario' ? 150 : 120;
     const fadeInDur = 30;
     const fadeOutDur = 30;
     const fadeOutStart = this.totalFrames - fadeOutDur;
@@ -64,7 +66,8 @@ export class UltimateCinematic extends Container {
 
     // 时间轴 spawn
     if (this.spec === 'altman') this.tickAltman();
-    else this.tickDario();
+    else if (this.spec === 'dario') this.tickDario();
+    else this.tickElon();
 
     // 推进现有 elements
     for (let i = this.elements.length - 1; i >= 0; i -= 1) {
@@ -103,12 +106,18 @@ export class UltimateCinematic extends Container {
       if (this.elapsed < 60) return 'lean_back';
       if (this.elapsed < 90) return 'burst';
       return 'recover'; // 90+ recover hold during VFX
-    } else {
+    }
+    if (this.spec === 'dario') {
       // 前 150 帧 character 3 阶段 (each 50f ≈ 0.83s)
       if (this.elapsed < 50) return 'judge_pose';
       if (this.elapsed < 100) return 'slam';
       return 'recover'; // 100+ hold during VFX
     }
+    // 前 120 帧 character 4 阶段 (each 30f = 0.5s)
+    if (this.elapsed < 30) return 'keynote_pose';
+    if (this.elapsed < 60) return 'countdown_pose';
+    if (this.elapsed < 90) return 'launch_pose';
+    return 'recover';
   }
 
   // === Altman 时间轴：5 秒 = 300 帧（史诗节奏）===
@@ -195,6 +204,46 @@ export class UltimateCinematic extends Container {
     if (this.elapsed === 365) {
       fire('outro', () =>
         this.spawnSubtitle('"For your safety."', STAGE_HEIGHT * 0.5, 28, 0xffffff, 15)
+      );
+    }
+  }
+
+  // === Elon 时间轴：5.7 秒 = 340 帧（轨道发射 + 电光冲击）===
+  private elonFiredEvents = new Set<string>();
+  private tickElon(): void {
+    const fire = (key: string, fn: () => void): void => {
+      if (!this.elonFiredEvents.has(key)) {
+        this.elonFiredEvents.add(key);
+        fn();
+      }
+    };
+
+    if (this.elapsed === 130) {
+      fire('orbit', () => this.spawnElectricOrbit());
+    }
+    if (this.elapsed === 145) {
+      fire('quote1', () =>
+        this.spawnSubtitle('"The launch window is now."', STAGE_HEIGHT * 0.34, 32, 0x93c5fd, 70)
+      );
+    }
+    if (this.elapsed === 190) {
+      fire('headline', () =>
+        this.spawnHeadline('ORBITAL\nPATCH NOTES', STAGE_HEIGHT * 0.42, 70, 0x60a5fa, 85)
+      );
+    }
+    if (this.elapsed === 230) {
+      fire('lines', () => this.spawnScreenLines());
+    }
+    if (this.elapsed === 255) {
+      fire('flash', () => this.spawnFullscreenFlash(0x93c5fd, 12));
+      fire('rocket', () => this.spawnRocketPlume());
+      fire('hitText', () =>
+        this.spawnHeadline('REUSED\nTO ORBIT', STAGE_HEIGHT * 0.43, 70, 0xfacc15, 55)
+      );
+    }
+    if (this.elapsed === 305) {
+      fire('outro', () =>
+        this.spawnSubtitle('"Anyway, it was a successful test."', STAGE_HEIGHT * 0.5, 28, 0xffffff, 28)
       );
     }
   }
@@ -350,6 +399,71 @@ export class UltimateCinematic extends Container {
         const grow = p < 0.4 ? p / 0.4 : 1;
         sprite.scale.set(targetScale * grow);
         sprite.alpha = p > 0.7 ? (1 - p) / 0.3 : 1;
+      },
+    });
+  }
+
+  private spawnElectricOrbit(): void {
+    const sprite = new Sprite(this.vfx.get('electric_orbit'));
+    sprite.anchor.set(0.5);
+    sprite.x = STAGE_WIDTH / 2;
+    sprite.y = STAGE_HEIGHT * 0.5;
+    const targetScale = (STAGE_HEIGHT * 0.82) / Math.max(sprite.texture.height, 1);
+    sprite.scale.set(targetScale * 0.25);
+    sprite.alpha = 0;
+    this.addChild(sprite);
+    this.elements.push({
+      obj: sprite,
+      birth: this.elapsed,
+      expire: this.elapsed + 120,
+      tick: (age, total) => {
+        const p = age / total;
+        sprite.scale.set(targetScale * (0.25 + Math.min(1, p * 2) * 0.75));
+        sprite.rotation += 0.035;
+        sprite.alpha = p < 0.15 ? p / 0.15 : p > 0.82 ? (1 - p) / 0.18 : 0.9;
+      },
+    });
+  }
+
+  private spawnRocketPlume(): void {
+    const sprite = new Sprite(this.vfx.get('rocket_plume'));
+    sprite.anchor.set(0.5, 1);
+    sprite.x = STAGE_WIDTH / 2;
+    sprite.y = STAGE_HEIGHT;
+    const targetScale = (STAGE_HEIGHT * 0.95) / Math.max(sprite.texture.height, 1);
+    sprite.scale.set(targetScale * 0.4, 0);
+    sprite.alpha = 1;
+    this.addChild(sprite);
+    this.elements.push({
+      obj: sprite,
+      birth: this.elapsed,
+      expire: this.elapsed + 62,
+      tick: (age, total) => {
+        const p = age / total;
+        sprite.scale.set(targetScale * (0.4 + p * 0.8), targetScale * Math.min(1, p * 2.4));
+        sprite.y = STAGE_HEIGHT - p * 55;
+        sprite.alpha = p > 0.72 ? (1 - p) / 0.28 : 1;
+      },
+    });
+  }
+
+  private spawnScreenLines(): void {
+    const sprite = new Sprite(this.vfx.get('screen_lines'));
+    sprite.anchor.set(0.5);
+    sprite.x = STAGE_WIDTH / 2;
+    sprite.y = STAGE_HEIGHT / 2;
+    sprite.width = STAGE_WIDTH;
+    sprite.height = STAGE_HEIGHT;
+    sprite.alpha = 0;
+    this.addChild(sprite);
+    this.elements.push({
+      obj: sprite,
+      birth: this.elapsed,
+      expire: this.elapsed + 65,
+      tick: (age, total) => {
+        const p = age / total;
+        sprite.alpha = p < 0.2 ? p / 0.2 : 1 - p;
+        sprite.x = STAGE_WIDTH / 2 + Math.sin(age * 0.7) * 18;
       },
     });
   }

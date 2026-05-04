@@ -37,8 +37,8 @@ interface ControlPrompt {
 
 const P1_COLOR = 0x4ade80;
 const P2_COLOR = 0xfb923c;
-const CARD_W = 360;
-const CARD_H = 360;
+const CARD_W = CHARACTER_ROSTER.length > 2 ? 290 : 360;
+const CARD_H = CARD_W;
 const START_DELAY_MS = 360;
 const SELECTOR_OUTER_PAD = 22;
 const POINTER_LABEL_GAP = 42;
@@ -175,10 +175,10 @@ export class CharacterSelectScene extends Scene {
 
   private spawnPortraitCards(): void {
     const yMid = STAGE_HEIGHT / 2 + 20;
-    const xs = [STAGE_WIDTH * 0.27, STAGE_WIDTH * 0.73];
+    const step = STAGE_WIDTH / (CHARACTER_ROSTER.length + 1);
 
     CHARACTER_ROSTER.forEach((character, index) => {
-      const x = xs[index] ?? STAGE_WIDTH / 2;
+      const x = step * (index + 1);
       const card = new Container();
       card.x = x;
       card.y = yMid;
@@ -225,7 +225,9 @@ export class CharacterSelectScene extends Scene {
       this.addChild(name);
     });
 
-    void this.spawnVs(yMid);
+    if (CHARACTER_ROSTER.length === 2) {
+      void this.spawnVs(yMid);
+    }
   }
 
   private async loadPortrait(

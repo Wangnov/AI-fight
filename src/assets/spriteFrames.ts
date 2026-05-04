@@ -12,8 +12,10 @@
  *           sit_down / lean_back / burst / recover (大招 4 阶段)
  *   Dario:  mythos_cast / mythos_release / constitution_cast / constitution_swing /
  *           judge_pose / slam / recover (大招 3 阶段，judge_pose → slam → recover)
+ *   Elon:   orbit_cast / orbit_throw / rocket_windup / rocket_swing /
+ *           keynote_pose / countdown_pose / launch_pose / recover (大招 4 阶段)
  *
- * recover 在两人都有但语义不同（Altman: 整理外套；Dario: 合上宪法），
+ * recover 在多名角色都有但语义不同（Altman: 整理外套；Dario: 合上宪法；Elon: 收起遥控器），
  * 路径区分由 character 前缀承担。
  */
 
@@ -58,12 +60,24 @@ export const DARIO_EXTRA_KEYS = [
   'recover',
 ] as const;
 
+export const ELON_EXTRA_KEYS = [
+  'orbit_cast',
+  'orbit_throw',
+  'rocket_windup',
+  'rocket_swing',
+  'keynote_pose',
+  'countdown_pose',
+  'launch_pose',
+  'recover',
+] as const;
+
 export type CommonFrameKey = (typeof COMMON_FRAME_KEYS)[number];
 export type AltmanFrameKey = CommonFrameKey | (typeof ALTMAN_EXTRA_KEYS)[number];
 export type DarioFrameKey = CommonFrameKey | (typeof DARIO_EXTRA_KEYS)[number];
+export type ElonFrameKey = CommonFrameKey | (typeof ELON_EXTRA_KEYS)[number];
 
-// Fighter 通用 FrameKey 类型 = 两人 keys 的并集（可能有 key 在某个角色不存在）
-export type FrameKey = AltmanFrameKey | DarioFrameKey;
+// Fighter 通用 FrameKey 类型 = 角色 keys 的并集（可能有 key 在某个角色不存在）
+export type FrameKey = AltmanFrameKey | DarioFrameKey | ElonFrameKey;
 
 // 4 帧 walk cycle (KOF EX 风格)
 export const WALK_CYCLE_KEYS: ReadonlyArray<CommonFrameKey> = [
@@ -74,7 +88,7 @@ export const WALK_CYCLE_KEYS: ReadonlyArray<CommonFrameKey> = [
 ];
 
 const buildFrames = (
-  character: 'altman' | 'dario',
+  character: 'altman' | 'dario' | 'elon',
   keys: ReadonlyArray<string>
 ): Record<string, string> => {
   const out: Record<string, string> = {};
@@ -93,3 +107,8 @@ export const DARIO_FRAMES: Record<DarioFrameKey, string> = buildFrames('dario', 
   ...COMMON_FRAME_KEYS,
   ...DARIO_EXTRA_KEYS,
 ]) as Record<DarioFrameKey, string>;
+
+export const ELON_FRAMES: Record<ElonFrameKey, string> = buildFrames('elon', [
+  ...COMMON_FRAME_KEYS,
+  ...ELON_EXTRA_KEYS,
+]) as Record<ElonFrameKey, string>;
