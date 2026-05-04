@@ -1,4 +1,4 @@
-import { Application, Assets, type Texture } from 'pixi.js';
+import { Application } from 'pixi.js';
 import {
   STAGE_BG_COLOR,
   STAGE_HEIGHT,
@@ -8,11 +8,14 @@ import { SceneManager } from './core/SceneManager';
 import { InputManager } from './input/InputManager';
 import { BattleScene, type BattleMode, type BattleResult } from './scenes/BattleScene';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene';
+import { LoadingScene } from './scenes/LoadingScene';
 import { MenuScene } from './scenes/MenuScene';
 import { ResultScene } from './scenes/ResultScene';
-import { SpriteSet } from './assets/SpriteSet';
-import { ALTMAN_FRAMES, DARIO_FRAMES } from './assets/spriteFrames';
-import { VFX_FRAMES } from './assets/vfxFrames';
+import {
+  getLoadedBattleAssets,
+  loadBattleAssets,
+  preloadMenuAssets,
+} from './assets/gameAssets';
 
 (async () => {
   const app = new Application();
@@ -49,30 +52,29 @@ import { VFX_FRAMES } from './assets/vfxFrames';
 
   const manager = new SceneManager(app.stage);
 
-  // 启动期一次性异步加载所有视觉资产：两套 sprite + VFX + 场景背景
-  const [altmanSprites, darioSprites, vfxSprites, bgArena] = await Promise.all([
-    SpriteSet.load(ALTMAN_FRAMES),
-    SpriteSet.load(DARIO_FRAMES),
-    SpriteSet.load(VFX_FRAMES, 'hit_spark'),
-    Assets.load<Texture>('/sprites/scene/bg_arena.png'),
-  ]);
+  void preloadMenuAssets();
 
   const showMenu = (): void => {
     manager.switchTo(
       new MenuScene({
         input,
-        bgArena,
+        bgArena: getLoadedBattleAssets()?.bgArena ?? null,
         onStart: (mode) => showCharacterSelect(mode),
       })
     );
   };
 
   const showCharacterSelect = (mode: BattleMode): void => {
+    // Start warming the heavy battle bundle while the player is on the select screen.
+    void loadBattleAssets().catch((err: unknown) => {
+      console.warn('[AI-Fight] battle asset preload failed:', err);
+    });
+
     manager.switchTo(
       new CharacterSelectScene({
         input,
         mode,
-        bgArena,
+        bgArena: getLoadedBattleAssets()?.bgArena ?? null,
         onConfirm: (m) => showBattle(m),
         onBack: () => showMenu(),
       })
@@ -80,22 +82,41 @@ import { VFX_FRAMES } from './assets/vfxFrames';
   };
 
   const showBattle = (mode: BattleMode): void => {
-    manager.switchTo(
-      new BattleScene({
-        input,
-        mode,
-        sprites: { altman: altmanSprites, dario: darioSprites, vfx: vfxSprites, bgArena },
-        onEnd: (result) => showResult(result),
-      })
+    manager.switchTo(new LoadingScene({
+      title: 'LOADING FIGHT',
+      subtitle: 'warming sprites and effects',
+    }));
+
+    void loadBattleAssets().then(
+      (assets) => {
+        manager.switchTo(
+          new BattleScene({
+            input,
+            mode,
+            sprites: assets,
+            onEnd: (result) => showResult(result),
+          })
+        );
+      },
+      (err: unknown) => {
+        console.error('[AI-Fight] battle asset load failed:', err);
+        manager.switchTo(new LoadingScene({
+          title: 'LOAD FAILED',
+          subtitle: 'refresh to retry',
+        }));
+      }
     );
   };
 
   const showResult = (result: BattleResult): void => {
+    const assets = getLoadedBattleAssets();
     manager.switchTo(
       new ResultScene({
         input,
         result,
-        sprites: { altman: altmanSprites, dario: darioSprites, bgArena },
+        sprites: assets
+          ? { altman: assets.altman, dario: assets.dario, bgArena: assets.bgArena }
+          : undefined,
         onContinue: () => showMenu(),
       })
     );

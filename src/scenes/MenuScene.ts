@@ -40,6 +40,11 @@ export class MenuScene extends Scene {
     this.input = opts.input;
     this.onStart = opts.onStart;
 
+    const fallbackBg = new Graphics()
+      .rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT)
+      .fill(0x0b0d12);
+    this.addChild(fallbackBg);
+
     void this.spawnLayers(opts.bgArena);
   }
 
@@ -225,4 +230,3 @@ export class MenuScene extends Scene {
     });
   }
 }
-

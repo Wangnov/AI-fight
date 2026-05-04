@@ -36,6 +36,7 @@ export class CharacterSelectScene extends Scene {
     this.onBack = opts.onBack;
 
     // 背景：模糊战场 bg + 暗化 overlay
+    let fallbackBg: Graphics | null = null;
     if (opts.bgArena) {
       const bg = new Sprite(opts.bgArena);
       bg.width = STAGE_WIDTH;
@@ -43,8 +44,9 @@ export class CharacterSelectScene extends Scene {
       bg.alpha = 0.35;
       this.addChild(bg);
     } else {
-      const bg = new Graphics().rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT).fill(0x0b0d12);
-      this.addChild(bg);
+      fallbackBg = new Graphics().rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT).fill(0x0b0d12);
+      this.addChild(fallbackBg);
+      void this.replaceFallbackBackground(fallbackBg);
     }
     const dark = new Graphics()
       .rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT)
@@ -59,6 +61,26 @@ export class CharacterSelectScene extends Scene {
 
     // 操作按钮：开始战斗 (中央) + 返回菜单 (右下)
     void this.spawnActionButtons();
+  }
+
+  private async replaceFallbackBackground(fallbackBg: Graphics): Promise<void> {
+    try {
+      const tex = await Assets.load<Texture>('/sprites/scene/menu_bg.png');
+      const bg = new Sprite(tex);
+      bg.width = STAGE_WIDTH;
+      bg.height = STAGE_HEIGHT;
+      bg.alpha = 0.48;
+      const index = this.children.includes(fallbackBg)
+        ? this.children.indexOf(fallbackBg)
+        : 0;
+      this.addChildAt(bg, index);
+      if (this.children.includes(fallbackBg)) {
+        this.removeChild(fallbackBg);
+        fallbackBg.destroy();
+      }
+    } catch {
+      /* keep fallback */
+    }
   }
 
   private async spawnActionButtons(): Promise<void> {
