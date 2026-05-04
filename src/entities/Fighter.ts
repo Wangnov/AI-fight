@@ -7,7 +7,11 @@ import {
   ENERGY_ON_BLOCK,
   ENERGY_ON_TAKEN,
   FIGHTER_CROUCH_HEIGHT,
+  FIGHTER_COLLISION_WIDTH,
   FIGHTER_HEIGHT,
+  FIGHTER_CROUCH_HURTBOX_HEIGHT,
+  FIGHTER_HURTBOX_HEIGHT,
+  FIGHTER_HURTBOX_WIDTH,
   FIGHTER_WIDTH,
   GRAVITY,
   GROUND_Y,
@@ -28,7 +32,7 @@ import type { SpriteSet } from '../assets/SpriteSet';
 import type { FrameKey } from '../assets/spriteFrames';
 import { WALK_CYCLE_KEYS } from '../assets/spriteFrames';
 
-const SPRITE_DISPLAY_HEIGHT = 380; // 角色 sprite 显示高度（视觉略大于 FIGHTER_HEIGHT 的 hurtbox）
+const SPRITE_DISPLAY_HEIGHT = 380; // 角色 sprite 显示高度
 
 export type FighterState =
   | 'idle'
@@ -436,7 +440,7 @@ export class Fighter extends Container {
         return;
       }
       if (input.wasPressed('combo1')) {
-        this.startAttack('combo1', { ...PROJECTILE_COMBO_1, hitboxOffsetX: 0, hitboxWidth: 0, hitboxHeight: 0 } as unknown as AttackData);
+        this.startAttack('combo1', { ...PROJECTILE_COMBO_1, hitboxOffsetX: 0, hitboxOffsetY: 0, hitboxWidth: 0, hitboxHeight: 0 } as unknown as AttackData);
         return;
       }
       if (input.wasPressed('combo2')) {
@@ -475,7 +479,7 @@ export class Fighter extends Container {
   private startAttack(kind: AttackKind, data: AttackData): void {
     this.attack = {
       kind,
-      data,
+      data: this.tuneAttackData(kind, data),
       frame: 0,
       hitTargets: new Set(),
       spawnedProjectile: false,
@@ -486,6 +490,20 @@ export class Fighter extends Container {
     if (kind === 'jab') sfx.play('jab');
     else if (kind === 'combo1') sfx.play('jab');
     else if (kind === 'combo2') sfx.play('heavy');
+  }
+
+  private tuneAttackData(kind: AttackKind, data: AttackData): AttackData {
+    if (kind === 'combo2' && this.preset.name === 'ALTMAN') {
+      return {
+        ...data,
+        hitboxOffsetX: 82,
+        hitboxOffsetY: -360,
+        hitboxWidth: 120,
+        hitboxHeight: 180,
+      };
+    }
+
+    return data;
   }
 
   private tickAttack(): void {
@@ -530,7 +548,7 @@ export class Fighter extends Container {
       if (this.vy > 0) this.vy = 0;
     }
 
-    const halfW = FIGHTER_WIDTH / 2;
+    const halfW = FIGHTER_COLLISION_WIDTH / 2;
     if (this.x < halfW) this.x = halfW;
     if (this.x > STAGE_WIDTH - halfW) this.x = STAGE_WIDTH - halfW;
 
@@ -567,10 +585,11 @@ export class Fighter extends Container {
     }
 
     const offsetX = a.data.hitboxOffsetX * this.facing;
+    const centerY = this.y + a.data.hitboxOffsetY;
     return {
       box: {
         x: this.x + offsetX - a.data.hitboxWidth / 2,
-        y: this.y - FIGHTER_HEIGHT - 20 + (FIGHTER_HEIGHT - a.data.hitboxHeight) / 2,
+        y: centerY - a.data.hitboxHeight / 2,
         w: a.data.hitboxWidth,
         h: a.data.hitboxHeight,
       },
@@ -579,11 +598,12 @@ export class Fighter extends Container {
   }
 
   getHurtbox(): AABB {
-    const h = this.state === 'crouch' ? FIGHTER_CROUCH_HEIGHT : FIGHTER_HEIGHT;
+    const h = this.state === 'crouch' ? FIGHTER_CROUCH_HURTBOX_HEIGHT : FIGHTER_HURTBOX_HEIGHT;
+    const w = FIGHTER_HURTBOX_WIDTH;
     return {
-      x: this.x - FIGHTER_WIDTH / 2,
+      x: this.x - w / 2,
       y: this.y - h,
-      w: FIGHTER_WIDTH,
+      w,
       h,
     };
   }

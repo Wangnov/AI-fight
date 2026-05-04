@@ -1,7 +1,6 @@
 import { Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import {
-  FIGHTER_WIDTH,
-  FLOOR_COLOR,
+  FIGHTER_COLLISION_WIDTH,
   GROUND_Y,
   KEYS_P1,
   KEYS_P2,
@@ -123,11 +122,9 @@ export class BattleScene extends Scene {
     this.addChild(this.worldLayer);
 
     const floor = new Graphics()
-      .rect(0, GROUND_Y, STAGE_WIDTH, STAGE_HEIGHT - GROUND_Y)
-      .fill(FLOOR_COLOR)
       .moveTo(0, GROUND_Y)
       .lineTo(STAGE_WIDTH, GROUND_Y)
-      .stroke({ color: 0x1f2937, width: 3 });
+      .stroke({ color: 0xffffff, width: 2, alpha: 0.18 });
     this.worldLayer.addChild(floor);
 
     this.projectilesLayer = new Container();
@@ -345,11 +342,7 @@ export class BattleScene extends Scene {
 
     // === 命中火花 + 字效弹出 ===
     if (this.feedback && this.combat.events.length > 0) {
-      const hitPoints = new Map<string, { x: number; y: number }>([
-        ['P1', { x: this.p1.x, y: this.p1.y - 130 }],
-        ['P2', { x: this.p2.x, y: this.p2.y - 130 }],
-      ]);
-      this.feedback.ingest(this.combat.events, hitPoints);
+      this.feedback.ingest(this.combat.events);
     }
     this.feedback?.update();
 
@@ -448,6 +441,7 @@ export class BattleScene extends Scene {
     this.screenEffects.shake(12, 18);
     this.screenEffects.flashScreen();
     if (this.feedback) {
+      const hurt = target.getHurtbox();
       const events: CombatEvent[] = [
         {
           attackerId: this.cinematicAttackerId,
@@ -455,10 +449,13 @@ export class BattleScene extends Scene {
           kind: 'ultimate',
           blocked: result.blocked,
           damage: result.dealt,
+          hitPoint: {
+            x: hurt.x + hurt.w / 2,
+            y: hurt.y + hurt.h * 0.42,
+          },
         },
       ];
-      const hitPoints = new Map([[target.id, { x: target.x, y: target.y - 130 }]]);
-      this.feedback.ingest(events, hitPoints);
+      this.feedback.ingest(events);
     }
   }
 
@@ -473,14 +470,14 @@ export class BattleScene extends Scene {
     if (!p1OnGround || !p2OnGround) return;
 
     const dx = this.p2.x - this.p1.x;
-    const minSeparation = FIGHTER_WIDTH;
+    const minSeparation = FIGHTER_COLLISION_WIDTH;
     const absDx = Math.abs(dx);
     if (absDx >= minSeparation) return;
 
     const overlap = minSeparation - absDx;
     const sign = dx >= 0 ? 1 : -1;
     const half = overlap / 2;
-    const halfW = FIGHTER_WIDTH / 2;
+    const halfW = FIGHTER_COLLISION_WIDTH / 2;
     const minX = halfW;
     const maxX = STAGE_WIDTH - halfW;
 

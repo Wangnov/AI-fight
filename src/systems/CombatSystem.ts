@@ -22,10 +22,22 @@ export interface CombatEvent {
   kind: 'jab' | 'combo1' | 'combo2' | 'ultimate';
   blocked: boolean;
   damage: number;
+  hitPoint: { x: number; y: number };
 }
 
 function intersects(a: AABB, b: AABB): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function intersectionCenter(a: AABB, b: AABB): { x: number; y: number } {
+  const x1 = Math.max(a.x, b.x);
+  const y1 = Math.max(a.y, b.y);
+  const x2 = Math.min(a.x + a.w, b.x + b.w);
+  const y2 = Math.min(a.y + a.h, b.y + b.h);
+  return {
+    x: (x1 + x2) / 2,
+    y: (y1 + y2) / 2,
+  };
 }
 
 /**
@@ -56,6 +68,7 @@ export class CombatSystem {
 
     const hurt = target.getHurtbox();
     if (!intersects(active.box, hurt)) return;
+    const hitPoint = intersectionCenter(active.box, hurt);
 
     active.attack.hitTargets.add(target.id);
 
@@ -102,6 +115,7 @@ export class CombatSystem {
       kind: active.attack.kind,
       blocked: result.blocked,
       damage: result.dealt,
+      hitPoint,
     });
   }
 
@@ -112,7 +126,10 @@ export class CombatSystem {
       for (const f of this.fighters) {
         if (f.id === p.ownerId) continue;
         if (!f.isAlive()) continue;
-        if (!intersects(p.getHitbox(), f.getHurtbox())) continue;
+        const projectileBox = p.getHitbox();
+        const hurt = f.getHurtbox();
+        if (!intersects(projectileBox, hurt)) continue;
+        const hitPoint = intersectionCenter(projectileBox, hurt);
 
         const dir: 1 | -1 = p.vx >= 0 ? 1 : -1;
         const result = f.takeHit({
@@ -136,6 +153,7 @@ export class CombatSystem {
           kind: 'combo1',
           blocked: result.blocked,
           damage: result.dealt,
+          hitPoint,
         });
         p.alive = false;
         break;

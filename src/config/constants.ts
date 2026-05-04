@@ -17,10 +17,14 @@ export const KNOCKBACK_LIGHT = 30;
 export const KNOCKBACK_HEAVY = 60;
 export const KNOCKBACK_ULTIMATE = 120;
 
-// === 角色尺寸（灰盒矩形）===
+// === 角色尺寸 ===
 export const FIGHTER_WIDTH = 100;
 export const FIGHTER_HEIGHT = 220;
 export const FIGHTER_CROUCH_HEIGHT = 140;
+export const FIGHTER_HURTBOX_WIDTH = 170;
+export const FIGHTER_HURTBOX_HEIGHT = 340;
+export const FIGHTER_CROUCH_HURTBOX_HEIGHT = 220;
+export const FIGHTER_COLLISION_WIDTH = 190;
 
 // === 战斗参数 ===
 export const MAX_HP = 1000;
@@ -62,7 +66,8 @@ export interface AttackData {
   startup: number;
   active: number;
   recovery: number;
-  hitboxOffsetX: number; // 相对角色中心的 hitbox 偏移
+  hitboxOffsetX: number; // 相对角色中心的 hitbox 横向偏移
+  hitboxOffsetY: number; // 相对脚底锚点的 hitbox 纵向偏移（负数向上）
   hitboxWidth: number;
   hitboxHeight: number;
   knockback: number;
@@ -77,9 +82,10 @@ export const ATTACK_JAB: AttackData = {
   active: 6,     // 100ms 出拳判定
   recovery: 14,  // 233ms 收招
   // 总 25 帧 = 417ms，街机感
-  hitboxOffsetX: 80,
-  hitboxWidth: 70,
-  hitboxHeight: 80,
+  hitboxOffsetX: 118,
+  hitboxOffsetY: -315,
+  hitboxWidth: 96,
+  hitboxHeight: 70,
   knockback: KNOCKBACK_LIGHT,
   hitstopFrames: HITSTOP_FRAMES_LIGHT,
   energyGain: ENERGY_ON_HIT,
@@ -91,9 +97,10 @@ export const ATTACK_COMBO_2: AttackData = {
   active: 8,     // 133ms 挥击
   recovery: 28,  // 467ms 大招式后摇
   // 总 48 帧 = 800ms
-  hitboxOffsetX: 90,
-  hitboxWidth: 110,
-  hitboxHeight: 200,
+  hitboxOffsetX: 112,
+  hitboxOffsetY: -105,
+  hitboxWidth: 180,
+  hitboxHeight: 125,
   knockback: KNOCKBACK_HEAVY,
   hitstopFrames: HITSTOP_FRAMES_HEAVY,
   energyGain: ENERGY_ON_COMBO_HIT,
@@ -106,6 +113,7 @@ export const ATTACK_ULTIMATE: AttackData = {
   active: 8,
   recovery: 30,
   hitboxOffsetX: 0,
+  hitboxOffsetY: 0,
   hitboxWidth: STAGE_WIDTH,
   hitboxHeight: STAGE_HEIGHT,
   knockback: KNOCKBACK_ULTIMATE,
@@ -147,7 +155,6 @@ export const ALTMAN_PROJECTILE_COLOR = 0x22d3ee;
 export const DARIO_COLOR = 0xfb923c; // Claude 橙
 export const DARIO_PROJECTILE_COLOR = 0xc084fc;
 export const HITBOX_DEBUG_COLOR = 0xff0000;
-export const FLOOR_COLOR = 0x2a2a35;
 export const HP_BG_COLOR = 0x222226;
 export const HP_FILL_COLOR_P1 = 0x4ade80;
 export const HP_FILL_COLOR_P2 = 0xfb923c;

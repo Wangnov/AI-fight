@@ -30,17 +30,16 @@ export class HitEffectsLayer extends Container {
   }
 
   /** 监听一组 CombatEvent，按攻击类型挑字效 + 火花 */
-  ingest(events: readonly CombatEvent[], hitPoints: Map<string, { x: number; y: number }>): void {
+  ingest(events: readonly CombatEvent[]): void {
     for (const ev of events) {
-      const point = hitPoints.get(ev.targetId);
-      if (!point) continue;
+      const point = ev.hitPoint;
       this.spawnSpark(point.x, point.y, ev);
       const phrase = pickPhrase(ev);
       const color = ev.attackerId === 'P1' ? 0x4ade80 : 0xfb923c;
-      this.spawnText(point.x, point.y - 30, phrase, color, ev.kind === 'ultimate');
+      this.spawnText(point.x, point.y - 36, phrase, color, ev.kind === 'ultimate');
       this.spawnDamageText(
         point.x,
-        point.y + 8,
+        point.y + 24,
         ev.blocked ? `GUARD -${ev.damage}` : `-${ev.damage}`,
         ev.blocked ? 0x93c5fd : 0xffffff
       );
@@ -50,14 +49,14 @@ export class HitEffectsLayer extends Container {
   private spawnSpark(x: number, y: number, ev: CombatEvent): void {
     const sprite = new Sprite(this.vfx.get(ev.blocked ? 'block_flash' : 'hit_spark'));
     sprite.anchor.set(0.5);
-    sprite.x = x + (Math.random() - 0.5) * 30;
-    sprite.y = y + (Math.random() - 0.5) * 20;
+    sprite.x = x + (Math.random() - 0.5) * 16;
+    sprite.y = y + (Math.random() - 0.5) * 12;
     const sizePx =
       ev.kind === 'jab'
-        ? 220
+        ? 150
         : ev.kind === 'combo1' || ev.kind === 'combo2'
-          ? 320
-          : 480;
+          ? 230
+          : 430;
     const baseScale = sizePx / Math.max(sprite.texture.width, 1);
     // 把 baseScale 存进 sprite.scale，update 用 ratio 调整
     sprite.scale.set(baseScale);
@@ -128,7 +127,7 @@ export class HitEffectsLayer extends Container {
       },
     });
     text.anchor.set(0.5);
-    text.x = x + 54;
+    text.x = x + 36;
     text.y = y;
     this.addChild(text);
     this.texts.push({
