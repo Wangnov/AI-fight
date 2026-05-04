@@ -213,8 +213,8 @@ export class MenuScene extends Scene {
   private async spawnCharacterLineup(): Promise<void> {
     const poses = [
       { path: '/sprites/scene/menu_altman.png', x: STAGE_WIDTH * 0.17, targetH: STAGE_HEIGHT * 0.64, phase: 0 },
-      { path: '/sprites/scene/menu_elon.png', x: STAGE_WIDTH * 0.50, targetH: STAGE_HEIGHT * 0.66, phase: 1.4 },
-      { path: '/sprites/scene/menu_dario.png', x: STAGE_WIDTH * 0.83, targetH: STAGE_HEIGHT * 0.64, phase: 2.8 },
+      { path: '/sprites/scene/menu_dario.png', x: STAGE_WIDTH * 0.50, targetH: STAGE_HEIGHT * 0.66, phase: 1.4 },
+      { path: '/sprites/scene/menu_elon.png', x: STAGE_WIDTH * 0.83, targetH: STAGE_HEIGHT * 0.64, phase: 2.8 },
     ];
 
     for (const pose of poses) {
