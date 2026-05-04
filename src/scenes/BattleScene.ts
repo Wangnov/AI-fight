@@ -201,23 +201,7 @@ export class BattleScene extends Scene {
     this.hud = new HUD(this.p1, this.p2);
     this.addChild(this.hud);
 
-    // === 操作提示 ===
-    const hint = new Text({
-      text:
-        this.mode === 'pvp'
-          ? 'P1: WASD 移动 / U 普攻 / I K 投射 / O L 组合技 / P ; 大招 / Q 防御\nP2: 方向键移动 / J 普攻 / K 投射 / L 组合技 / ; 大招 / 右Shift 防御'
-          : 'P1: WASD 移动 / U 普攻 / I 投射 / O 组合技 / P 大招 / Q 防御\nAI: 自动应战',
-      style: {
-        fontFamily: 'system-ui',
-        fontSize: 12,
-        fill: 0x6b7280,
-        align: 'center',
-      },
-    });
-    hint.anchor.set(0.5, 1);
-    hint.x = STAGE_WIDTH / 2;
-    hint.y = STAGE_HEIGHT - 8;
-    this.addChild(hint);
+    this.spawnControlHints(p1Character.color, p2Character.color);
 
     // === 开场倒计时大字 ===
     this.countdownText = new Text({
@@ -236,6 +220,67 @@ export class BattleScene extends Scene {
     this.countdownText.x = STAGE_WIDTH / 2;
     this.countdownText.y = STAGE_HEIGHT / 2;
     this.addChild(this.countdownText);
+  }
+
+  private spawnControlHints(p1Color: number, p2Color: number): void {
+    const p1Text = 'WASD 移动 · U 普攻 · I 投射 · O 重击 · P 大招 · Q 防御';
+    const p2Text = this.mode === 'pvp'
+      ? '方向键移动 · J 普攻 · K 投射 · L 重击 · ; 大招 · 右Shift 防御'
+      : '自动应战';
+
+    this.addChild(this.makeControlHint('P1', p1Text, p1Color, 'left'));
+    this.addChild(this.makeControlHint(this.mode === 'pvp' ? 'P2' : 'AI', p2Text, p2Color, 'right'));
+  }
+
+  private makeControlHint(
+    label: string,
+    detail: string,
+    color: number,
+    side: 'left' | 'right'
+  ): Container {
+    const w = 556;
+    const h = 48;
+    const root = new Container();
+    root.x = side === 'left' ? 28 : STAGE_WIDTH - w - 28;
+    root.y = STAGE_HEIGHT - 38;
+
+    const panel = new Graphics()
+      .rect(0, -h / 2, w, h)
+      .fill({ color: 0x020617, alpha: 0.42 })
+      .rect(0, -h / 2, w, h)
+      .stroke({ color, width: 2, alpha: 0.52 });
+    root.addChild(panel);
+
+    const labelText = new Text({
+      text: label,
+      style: {
+        fontFamily: 'Impact, system-ui',
+        fontSize: 24,
+        fontWeight: 'bold',
+        fill: color,
+        stroke: { color: 0x000000, width: 4 },
+      },
+    });
+    labelText.anchor.set(0, 0.5);
+    labelText.x = 14;
+    root.addChild(labelText);
+
+    const detailText = new Text({
+      text: detail,
+      style: {
+        fontFamily: 'system-ui',
+        fontSize: 13,
+        fontWeight: 'bold',
+        fill: 0xe5e7eb,
+        letterSpacing: 0.2,
+        stroke: { color: 0x000000, width: 2 },
+      },
+    });
+    detailText.anchor.set(0, 0.5);
+    detailText.x = 62;
+    root.addChild(detailText);
+
+    return root;
   }
 
   /** 倒计时阶段：每秒 60 帧 — 0-60: "3", 60-120: "2", 120-180: "1", 180-240: "FIGHT!" */

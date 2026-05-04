@@ -28,6 +28,13 @@ interface CardLayout {
   h: number;
 }
 
+interface ControlPrompt {
+  root: Container;
+  panel: Graphics;
+  label: Text;
+  detail: Text;
+}
+
 const P1_COLOR = 0x4ade80;
 const P2_COLOR = 0xfb923c;
 const CARD_W = 360;
@@ -58,6 +65,8 @@ export class CharacterSelectScene extends Scene {
   private readonly p1ReadyStamp: Text;
   private readonly p2ReadyStamp: Text;
   private readonly statusText: Text;
+  private readonly p1Prompt: ControlPrompt;
+  private readonly p2Prompt: ControlPrompt;
   private readonly helpText: Text;
 
   private selected: Record<PlayerSlot, number> = { p1: 0, p2: 1 };
@@ -80,6 +89,8 @@ export class CharacterSelectScene extends Scene {
     this.p1ReadyStamp = this.makeReadyStamp('P1 READY', P1_COLOR);
     this.p2ReadyStamp = this.makeReadyStamp(this.mode === 'pve' ? 'CPU READY' : 'P2 READY', P2_COLOR);
     this.statusText = this.makeStatusText();
+    this.p1Prompt = this.makeControlPrompt('P1', P1_COLOR);
+    this.p2Prompt = this.makeControlPrompt(this.mode === 'pve' ? 'CPU' : 'P2', P2_COLOR);
     this.helpText = this.makeHelpText();
 
     this.syncCpuSelection();
@@ -89,7 +100,7 @@ export class CharacterSelectScene extends Scene {
     this.spawnActionStrip();
     this.addChild(this.selectorGraphics);
     this.addChild(this.p1Badge, this.p2Badge, this.cpuBadge, this.p1ReadyStamp, this.p2ReadyStamp);
-    this.addChild(this.statusText, this.helpText);
+    this.addChild(this.statusText, this.p1Prompt.root, this.p2Prompt.root, this.helpText);
     this.drawSelectors();
   }
 
@@ -274,23 +285,6 @@ export class CharacterSelectScene extends Scene {
       .lineTo(STAGE_WIDTH, STAGE_HEIGHT - 112)
       .stroke({ color: 0xffffff, width: 1, alpha: 0.12 });
     this.addChild(strip);
-
-    void this.spawnMenuButton();
-  }
-
-  private async spawnMenuButton(): Promise<void> {
-    try {
-      const texMenu = await Assets.load<Texture>('/sprites/vfx/btn_menu.png');
-      if (this.destroyed) return;
-      const menu = new Sprite(texMenu);
-      menu.anchor.set(1, 0.5);
-      menu.scale.set(66 / texMenu.height);
-      menu.x = STAGE_WIDTH - 24;
-      menu.y = STAGE_HEIGHT - 48;
-      this.addChild(menu);
-    } catch {
-      /* skip */
-    }
   }
 
   private makeBadge(text: string, color: number): Text {
@@ -331,7 +325,7 @@ export class CharacterSelectScene extends Scene {
       text: '',
       style: {
         fontFamily: 'Impact, system-ui',
-        fontSize: 30,
+        fontSize: 26,
         fontWeight: 'bold',
         fill: 0xfacc15,
         stroke: { color: 0x000000, width: 5 },
@@ -340,8 +334,45 @@ export class CharacterSelectScene extends Scene {
     });
     text.anchor.set(0.5);
     text.x = STAGE_WIDTH / 2;
-    text.y = STAGE_HEIGHT - 84;
+    text.y = STAGE_HEIGHT - 104;
     return text;
+  }
+
+  private makeControlPrompt(label: string, color: number): ControlPrompt {
+    const root = new Container();
+    const panel = new Graphics();
+    root.addChild(panel);
+
+    const labelText = new Text({
+      text: label,
+      style: {
+        fontFamily: 'Impact, system-ui',
+        fontSize: 24,
+        fontWeight: 'bold',
+        fill: color,
+        stroke: { color: 0x000000, width: 4 },
+      },
+    });
+    labelText.anchor.set(0, 0.5);
+    labelText.x = 16;
+    root.addChild(labelText);
+
+    const detail = new Text({
+      text: '',
+      style: {
+        fontFamily: 'system-ui',
+        fontSize: 14,
+        fontWeight: 'bold',
+        fill: 0xf8fafc,
+        letterSpacing: 0.5,
+        stroke: { color: 0x000000, width: 2 },
+      },
+    });
+    detail.anchor.set(0, 0.5);
+    detail.x = 74;
+    root.addChild(detail);
+
+    return { root, panel, label: labelText, detail };
   }
 
   private makeHelpText(): Text {
@@ -358,7 +389,7 @@ export class CharacterSelectScene extends Scene {
     });
     text.anchor.set(0.5);
     text.x = STAGE_WIDTH / 2;
-    text.y = STAGE_HEIGHT - 30;
+    text.y = STAGE_HEIGHT - 22;
     return text;
   }
 
@@ -604,23 +635,66 @@ export class CharacterSelectScene extends Scene {
   }
 
   private updateStatusText(): void {
+    this.positionControlPrompts();
+
     if (this.startDelayMS >= 0) {
+      this.statusText.visible = true;
       this.statusText.text = 'READY  FIGHT!';
+      this.p1Prompt.root.visible = false;
+      this.p2Prompt.root.visible = false;
       this.helpText.text = 'loading selected fighters...';
       return;
     }
 
+    this.p1Prompt.root.visible = true;
+    this.p2Prompt.root.visible = true;
+
     if (this.mode === 'pve') {
       const player = this.cards[this.selected.p1]?.character.name ?? 'P1';
       const cpu = this.cards[this.selected.p2]?.character.name ?? 'CPU';
+      this.statusText.visible = true;
       this.statusText.text = `P1: ${player}  VS  CPU: ${cpu}`;
-      this.helpText.text = 'A/D or ←/→ 选择   ENTER/SPACE/U 确认   Q/Esc 返回';
+      this.setControlPrompt(this.p1Prompt, 'P1', P1_COLOR, this.ready.p1 ? 'READY' : 'A/D 或 ←/→ 选择 · Enter/Space/U 确认');
+      this.setControlPrompt(this.p2Prompt, 'CPU', P2_COLOR, '自动选择对手');
+      this.helpText.text = 'Q/Esc 返回菜单';
       return;
     }
 
-    const p1 = this.ready.p1 ? 'P1 READY' : 'P1 A/D SELECT · U/ENTER READY';
-    const p2 = this.ready.p2 ? 'P2 READY' : 'P2 ←/→ SELECT · J/SPACE READY';
-    this.statusText.text = `${p1}     ${p2}`;
-    this.helpText.text = '双方 Ready 后自动开始   Q/Esc 返回菜单';
+    this.statusText.visible = false;
+    this.setControlPrompt(this.p1Prompt, 'P1', P1_COLOR, this.ready.p1 ? 'READY' : 'A/D 选择 · U/Enter Ready');
+    this.setControlPrompt(this.p2Prompt, 'P2', P2_COLOR, this.ready.p2 ? 'READY' : '←/→ 选择 · J/Space Ready');
+    this.helpText.text = '双方 Ready 后自动开始 · Q/Esc 返回菜单';
+  }
+
+  private positionControlPrompts(): void {
+    const w = 520;
+    const h = 44;
+    const y = STAGE_HEIGHT - 66;
+    this.p1Prompt.root.x = 34;
+    this.p1Prompt.root.y = y;
+    this.p2Prompt.root.x = STAGE_WIDTH - w - 34;
+    this.p2Prompt.root.y = y;
+    this.redrawControlPanel(this.p1Prompt, w, h, P1_COLOR);
+    this.redrawControlPanel(this.p2Prompt, w, h, P2_COLOR);
+  }
+
+  private redrawControlPanel(prompt: ControlPrompt, w: number, h: number, color: number): void {
+    prompt.panel
+      .clear()
+      .rect(0, -h / 2, w, h)
+      .fill({ color: 0x020617, alpha: 0.58 })
+      .rect(0, -h / 2, w, h)
+      .stroke({ color, width: 2, alpha: 0.6 });
+  }
+
+  private setControlPrompt(
+    prompt: ControlPrompt,
+    label: string,
+    color: number,
+    detail: string
+  ): void {
+    prompt.label.text = label;
+    prompt.label.style.fill = color;
+    prompt.detail.text = detail;
   }
 }
