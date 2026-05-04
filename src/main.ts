@@ -7,6 +7,7 @@ import {
 import { SceneManager } from './core/SceneManager';
 import { InputManager } from './input/InputManager';
 import { BattleScene, type BattleMode, type BattleResult } from './scenes/BattleScene';
+import { CharacterSelectScene } from './scenes/CharacterSelectScene';
 import { MenuScene } from './scenes/MenuScene';
 import { ResultScene } from './scenes/ResultScene';
 import { SpriteSet } from './assets/SpriteSet';
@@ -60,7 +61,20 @@ import { VFX_FRAMES } from './assets/vfxFrames';
     manager.switchTo(
       new MenuScene({
         input,
-        onStart: (mode) => showBattle(mode),
+        bgArena,
+        onStart: (mode) => showCharacterSelect(mode),
+      })
+    );
+  };
+
+  const showCharacterSelect = (mode: BattleMode): void => {
+    manager.switchTo(
+      new CharacterSelectScene({
+        input,
+        mode,
+        bgArena,
+        onConfirm: (m) => showBattle(m),
+        onBack: () => showMenu(),
       })
     );
   };
