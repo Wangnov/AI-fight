@@ -38,11 +38,17 @@ export class HitEffectsLayer extends Container {
       const phrase = pickPhrase(ev);
       const color = ev.attackerId === 'P1' ? 0x4ade80 : 0xfb923c;
       this.spawnText(point.x, point.y - 30, phrase, color, ev.kind === 'ultimate');
+      this.spawnDamageText(
+        point.x,
+        point.y + 8,
+        ev.blocked ? `GUARD -${ev.damage}` : `-${ev.damage}`,
+        ev.blocked ? 0x93c5fd : 0xffffff
+      );
     }
   }
 
   private spawnSpark(x: number, y: number, ev: CombatEvent): void {
-    const sprite = new Sprite(this.vfx.get('hit_spark'));
+    const sprite = new Sprite(this.vfx.get(ev.blocked ? 'block_flash' : 'hit_spark'));
     sprite.anchor.set(0.5);
     sprite.x = x + (Math.random() - 0.5) * 30;
     sprite.y = y + (Math.random() - 0.5) * 20;
@@ -55,7 +61,7 @@ export class HitEffectsLayer extends Container {
     const baseScale = sizePx / Math.max(sprite.texture.width, 1);
     // 把 baseScale 存进 sprite.scale，update 用 ratio 调整
     sprite.scale.set(baseScale);
-    sprite.tint = ev.blocked ? 0x60a5fa : 0xffffff; // 不染色，保留 hit_spark 原本的白心黄边
+    sprite.tint = ev.blocked ? 0x90c7ff : 0xffffff;
     sprite.rotation = Math.random() * Math.PI * 2;
     this.addChild(sprite);
     this.sparks.push({
@@ -100,6 +106,36 @@ export class HitEffectsLayer extends Container {
       framesLeft: 50,
       totalFrames: 50,
       vy: -2.5, // 上浮速度
+    });
+  }
+
+  private spawnDamageText(x: number, y: number, content: string, color: number): void {
+    const text = new Text({
+      text: content,
+      style: {
+        fontFamily: 'Impact, system-ui',
+        fontSize: 24,
+        fill: color,
+        fontWeight: '900',
+        stroke: { color: 0x000000, width: 4 },
+        dropShadow: {
+          color: 0x000000,
+          blur: 4,
+          distance: 3,
+          angle: Math.PI / 4,
+          alpha: 0.75,
+        },
+      },
+    });
+    text.anchor.set(0.5);
+    text.x = x + 54;
+    text.y = y;
+    this.addChild(text);
+    this.texts.push({
+      text,
+      framesLeft: 34,
+      totalFrames: 34,
+      vy: -1.8,
     });
   }
 

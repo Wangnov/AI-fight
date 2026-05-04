@@ -27,7 +27,7 @@ import { ScreenEffects } from '../systems/ScreenEffects';
 import { AIController } from '../systems/AIController';
 import { HUD } from '../ui/HUD';
 import type { SpriteSet } from '../assets/SpriteSet';
-import { HitEffectsLayer } from '../systems/HitEffectsLayer';
+import { CombatFeedbackLayer } from '../systems/CombatFeedbackLayer';
 import { sfx } from '../systems/SoundManager';
 import { UltimateCinematic } from '../systems/UltimateCinematic';
 
@@ -66,7 +66,7 @@ export class BattleScene extends Scene {
   private readonly screenEffects: ScreenEffects;
   private readonly hud: HUD;
   private readonly projectiles: Projectile[] = [];
-  private readonly hitEffects: HitEffectsLayer | null;
+  private readonly feedback: CombatFeedbackLayer | null;
   private readonly vfxSprites: SpriteSet | null;
 
   private timeLeftMS = ROUND_TIME_SECONDS * 1000;
@@ -154,10 +154,10 @@ export class BattleScene extends Scene {
 
     // === 命中效果层（火花 + 字效，受 shake 影响）===
     if (this.vfxSprites) {
-      this.hitEffects = new HitEffectsLayer(this.vfxSprites);
-      this.worldLayer.addChild(this.hitEffects);
+      this.feedback = new CombatFeedbackLayer(this.vfxSprites);
+      this.worldLayer.addChild(this.feedback);
     } else {
-      this.hitEffects = null;
+      this.feedback = null;
     }
 
     // === 输入绑定 ===
@@ -266,6 +266,7 @@ export class BattleScene extends Scene {
   update(deltaMS: number): void {
     // === 开场倒计时：冻结战斗 + 不推进时间 ===
     if (this.updateCountdown()) {
+      this.feedback?.showActiveAttacks([]);
       this.hud.update(this.timeLeftMS / 1000);
       this.aiInput?.endFrame();
       return;
@@ -301,6 +302,8 @@ export class BattleScene extends Scene {
         this.cinematicDamageDealt = false;
       }
       this.hud.update(this.timeLeftMS / 1000);
+      this.feedback?.showActiveAttacks([]);
+      this.feedback?.update();
       this.aiInput?.endFrame();
       return;
     }
@@ -338,16 +341,17 @@ export class BattleScene extends Scene {
 
     // === 命中判定 ===
     this.combat.step();
+    this.feedback?.showActiveAttacks([this.p1, this.p2]);
 
     // === 命中火花 + 字效弹出 ===
-    if (this.hitEffects && this.combat.events.length > 0) {
+    if (this.feedback && this.combat.events.length > 0) {
       const hitPoints = new Map<string, { x: number; y: number }>([
         ['P1', { x: this.p1.x, y: this.p1.y - 130 }],
         ['P2', { x: this.p2.x, y: this.p2.y - 130 }],
       ]);
-      this.hitEffects.ingest(this.combat.events, hitPoints);
+      this.feedback.ingest(this.combat.events, hitPoints);
     }
-    this.hitEffects?.update();
+    this.feedback?.update();
 
     // === 死掉的投射物清理 ===
     for (let i = this.projectiles.length - 1; i >= 0; i -= 1) {
@@ -443,7 +447,7 @@ export class BattleScene extends Scene {
     });
     this.screenEffects.shake(12, 18);
     this.screenEffects.flashScreen();
-    if (this.hitEffects) {
+    if (this.feedback) {
       const events: CombatEvent[] = [
         {
           attackerId: this.cinematicAttackerId,
@@ -454,7 +458,7 @@ export class BattleScene extends Scene {
         },
       ];
       const hitPoints = new Map([[target.id, { x: target.x, y: target.y - 130 }]]);
-      this.hitEffects.ingest(events, hitPoints);
+      this.feedback.ingest(events, hitPoints);
     }
   }
 

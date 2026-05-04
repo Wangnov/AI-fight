@@ -19,18 +19,26 @@ export class HUD extends Container {
   private readonly p2HpFill: Graphics;
   private readonly p1EnergyFill: Graphics;
   private readonly p2EnergyFill: Graphics;
+  private readonly p1HpFlash: Graphics;
+  private readonly p2HpFlash: Graphics;
   private readonly p1HpText: Text;
   private readonly p2HpText: Text;
   private readonly p1EnergyText: Text;
   private readonly p2EnergyText: Text;
   private readonly timerText: Text;
   private readonly subtitleText: Text;
+  private prevP1Hp = 0;
+  private prevP2Hp = 0;
+  private p1FlashFrames = 0;
+  private p2FlashFrames = 0;
 
   constructor(
     private readonly p1: Fighter,
     private readonly p2: Fighter
   ) {
     super();
+    this.prevP1Hp = p1.hp;
+    this.prevP2Hp = p2.hp;
 
     // === 血条 ===
     const p1HpBg = new Graphics()
@@ -51,6 +59,11 @@ export class HUD extends Container {
     this.p2HpFill = new Graphics();
     this.addChild(this.p1HpFill);
     this.addChild(this.p2HpFill);
+
+    this.p1HpFlash = new Graphics();
+    this.p2HpFlash = new Graphics();
+    this.addChild(this.p1HpFlash);
+    this.addChild(this.p2HpFlash);
 
     // === 能量条 ===
     const p1EnergyBg = new Graphics()
@@ -194,11 +207,23 @@ export class HUD extends Container {
     const p1EnergyRatio = Math.max(0, this.p1.energy / MAX_ENERGY);
     const p2EnergyRatio = Math.max(0, this.p2.energy / MAX_ENERGY);
 
+    if (this.p1.hp < this.prevP1Hp) this.p1FlashFrames = 14;
+    if (this.p2.hp < this.prevP2Hp) this.p2FlashFrames = 14;
+    this.prevP1Hp = this.p1.hp;
+    this.prevP2Hp = this.p2.hp;
+
     // 左侧血条：从右向左缩短（fill 起点固定在左）
     this.p1HpFill.clear();
     this.p1HpFill
       .rect(40, HUD_TOP, HP_BAR_WIDTH * p1HpRatio, HP_BAR_HEIGHT)
       .fill(this.p1.preset.hpFillColor);
+    this.p1HpFlash.clear();
+    if (this.p1FlashFrames > 0) {
+      this.p1HpFlash
+        .rect(40, HUD_TOP, HP_BAR_WIDTH, HP_BAR_HEIGHT)
+        .fill({ color: 0xffffff, alpha: this.p1FlashFrames / 28 });
+      this.p1FlashFrames -= 1;
+    }
 
     // 右侧血条：从左向右缩短（fill 终点固定在右）
     this.p2HpFill.clear();
@@ -211,6 +236,13 @@ export class HUD extends Container {
         HP_BAR_HEIGHT
       )
       .fill(this.p2.preset.hpFillColor);
+    this.p2HpFlash.clear();
+    if (this.p2FlashFrames > 0) {
+      this.p2HpFlash
+        .rect(STAGE_WIDTH - 40 - HP_BAR_WIDTH, HUD_TOP, HP_BAR_WIDTH, HP_BAR_HEIGHT)
+        .fill({ color: 0xffffff, alpha: this.p2FlashFrames / 28 });
+      this.p2FlashFrames -= 1;
+    }
 
     // 能量条
     this.p1EnergyFill.clear();
@@ -236,8 +268,14 @@ export class HUD extends Container {
 
     this.p1HpText.text = `${this.p1.hp} / ${MAX_HP}`;
     this.p2HpText.text = `${this.p2.hp} / ${MAX_HP}`;
-    this.p1EnergyText.text = `${this.p1.preset.energyLabel} ${Math.floor(this.p1.energy)}/${MAX_ENERGY}`;
-    this.p2EnergyText.text = `${this.p2.preset.energyLabel} ${Math.floor(this.p2.energy)}/${MAX_ENERGY}`;
+    this.p1EnergyText.text = this.p1.energy >= MAX_ENERGY
+      ? `${this.p1.preset.energyLabel} READY`
+      : `${this.p1.preset.energyLabel} ${Math.floor(this.p1.energy)}/${MAX_ENERGY}`;
+    this.p2EnergyText.text = this.p2.energy >= MAX_ENERGY
+      ? `${this.p2.preset.energyLabel} READY`
+      : `${this.p2.preset.energyLabel} ${Math.floor(this.p2.energy)}/${MAX_ENERGY}`;
+    this.p1EnergyText.tint = this.p1.energy >= MAX_ENERGY ? 0xfacc15 : 0xffffff;
+    this.p2EnergyText.tint = this.p2.energy >= MAX_ENERGY ? 0xfacc15 : 0xffffff;
     this.timerText.text = `${Math.max(0, Math.ceil(secondsLeft))}`;
   }
 }
