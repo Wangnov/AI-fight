@@ -100,6 +100,9 @@ export class CombatSystem {
       attacker.addEnergy(active.attack.data.energyGain);
     }
     attacker.hitstopFrames = Math.max(attacker.hitstopFrames, hitstop);
+    if (!isUltimate) {
+      attacker.nudgeOnHit(dir, active.attack.kind === 'jab' ? 5 : 9);
+    }
 
     // 视觉反馈
     if (isUltimate) {

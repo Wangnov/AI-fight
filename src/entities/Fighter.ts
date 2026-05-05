@@ -81,6 +81,9 @@ export class Fighter extends Container {
   private body!: Graphics;
   private faceMarker!: Graphics;
   private flashFrames = 0;
+  private hitJoltFrames = 0;
+  private hitJoltTotalFrames = 0;
+  private hitJoltDir: 1 | -1 = 1;
   private sprite!: Sprite;
   private spriteSet: SpriteSet | null = null;
   private forcedFrame: string | null = null;
@@ -243,6 +246,14 @@ export class Fighter extends Container {
       this.sprite.scale.y = base;
       this.sprite.y = 0;
     }
+
+    if (this.hitJoltFrames > 0) {
+      const p = this.hitJoltFrames / Math.max(this.hitJoltTotalFrames, 1);
+      const flick = this.hitJoltFrames % 2 === 0 ? -1 : 1;
+      this.sprite.x = this.hitJoltDir * flick * (4 + 10 * p);
+    } else {
+      this.sprite.x = 0;
+    }
   }
 
   private pickFrameKey(): FrameKey {
@@ -359,6 +370,7 @@ export class Fighter extends Container {
    */
   update(): void {
     if (this.flashFrames > 0) this.flashFrames -= 1;
+    if (this.hitJoltFrames > 0) this.hitJoltFrames -= 1;
 
     if (this.hitstopFrames > 0) {
       this.hitstopFrames -= 1;
@@ -562,6 +574,11 @@ export class Fighter extends Container {
     this.state = s;
   }
 
+  nudgeOnHit(direction: 1 | -1, amount: number): void {
+    const halfW = FIGHTER_COLLISION_WIDTH / 2;
+    this.x = Math.min(STAGE_WIDTH - halfW, Math.max(halfW, this.x + direction * amount));
+  }
+
   // === 暴露给 CombatSystem 的接口 ===
 
   /** 当前是否处于攻击的 active 帧（hitbox 生效） */
@@ -641,6 +658,9 @@ export class Fighter extends Container {
       this.vx = opts.fromDirection * 6;
       this.hitstopFrames = Math.max(this.hitstopFrames, opts.hitstopFrames);
       this.flashFrames = 2;
+      this.hitJoltFrames = 4;
+      this.hitJoltTotalFrames = 4;
+      this.hitJoltDir = opts.fromDirection;
     } else {
       sfx.play(opts.isUltimate ? 'heavy' : 'jab');
       this.vx = opts.fromDirection * (opts.knockback * 0.3);
@@ -648,6 +668,9 @@ export class Fighter extends Container {
       this.hitstopFrames = Math.max(this.hitstopFrames, opts.hitstopFrames);
       this.hitstunFrames = opts.hitstunFrames;
       this.flashFrames = 3;
+      this.hitJoltFrames = opts.isUltimate ? 12 : 8;
+      this.hitJoltTotalFrames = this.hitJoltFrames;
+      this.hitJoltDir = opts.fromDirection;
       this.attack = null; // 中断攻击
       this.state = 'hit';
 

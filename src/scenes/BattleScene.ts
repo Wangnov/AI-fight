@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
+import { Container, Graphics, Sprite, Text, type Renderer, type Texture } from 'pixi.js';
 import {
   FIGHTER_COLLISION_WIDTH,
   GROUND_Y,
@@ -34,6 +34,8 @@ import { CombatFeedbackLayer } from '../systems/CombatFeedbackLayer';
 import { sfx } from '../systems/SoundManager';
 import { UltimateCinematic } from '../systems/UltimateCinematic';
 import { MOVE_SETS } from '../config/moveSets';
+import { BitmapFxDirector } from '../systems/BitmapFxDirector';
+import { getVfxStyle } from '../config/visualLanguage';
 
 export type BattleMode = 'pvp' | 'pve';
 export type BattleResult =
@@ -50,6 +52,7 @@ export interface BattleSceneOptions {
     vfx: SpriteSet;
     bgArena: Texture;
   };
+  renderer?: Renderer;
   selections?: BattleSelections;
   onEnd: (result: BattleResult) => void;
 }
@@ -73,6 +76,8 @@ export class BattleScene extends Scene {
   private readonly aiInput: VirtualInputProvider | null = null;
   private readonly combat: CombatSystem;
   private readonly screenEffects: ScreenEffects;
+  private readonly screenBitmapFx: BitmapFxDirector | null;
+  private readonly renderer: Renderer | null;
   private readonly hud: HUD;
   private readonly projectiles: Projectile[] = [];
   private readonly feedback: CombatFeedbackLayer | null;
@@ -96,6 +101,7 @@ export class BattleScene extends Scene {
     this.input = opts.input;
     this.mode = opts.mode;
     this.onEnd = opts.onEnd;
+    this.renderer = opts.renderer ?? null;
 
     // === 背景：实图 bg_arena 替换原灰色矩形（fallback 留 Graphics 兜底）===
     if (opts.sprites?.bgArena) {
@@ -164,6 +170,7 @@ export class BattleScene extends Scene {
     } else {
       this.vfxSprites = null;
     }
+    this.screenBitmapFx = this.vfxSprites ? new BitmapFxDirector(this.vfxSprites) : null;
     this.fightersLayer.addChild(this.p1);
     this.fightersLayer.addChild(this.p2);
     this.faceFightersTowardEachOther();
@@ -201,6 +208,9 @@ export class BattleScene extends Scene {
     );
 
     this.addChild(this.overlayLayer);
+    if (this.screenBitmapFx) {
+      this.addChild(this.screenBitmapFx);
+    }
 
     // === HUD ===
     this.hud = new HUD(this.p1, this.p2);
@@ -369,6 +379,7 @@ export class BattleScene extends Scene {
         this.cinematicDamageDealt = false;
       }
       this.hud.update(this.timeLeftMS / 1000);
+      this.screenBitmapFx?.update();
       this.feedback?.showActiveAttacks([]);
       this.feedback?.update();
       this.aiInput?.endFrame();
@@ -413,8 +424,10 @@ export class BattleScene extends Scene {
     // === 命中火花 + 字效弹出 ===
     if (this.feedback && this.combat.events.length > 0) {
       this.feedback.ingest(this.combat.events);
+      this.spawnScreenBitmapFeedback(this.combat.events);
     }
     this.feedback?.update();
+    this.screenBitmapFx?.update();
 
     // === 死掉的投射物清理 ===
     for (let i = this.projectiles.length - 1; i >= 0; i -= 1) {
@@ -527,6 +540,31 @@ export class BattleScene extends Scene {
         },
       ];
       this.feedback.ingest(events);
+      this.spawnScreenBitmapFeedback(events);
+    }
+  }
+
+  private spawnScreenBitmapFeedback(events: readonly CombatEvent[]): void {
+    const renderer = this.renderer;
+    if (!renderer || !this.screenBitmapFx) return;
+    const strongest =
+      events.find((ev) => ev.kind === 'ultimate') ??
+      events.find((ev) => ev.kind === 'combo2') ??
+      events.find((ev) => ev.kind === 'combo1' && !ev.blocked);
+    if (!strongest || strongest.kind === 'jab') return;
+
+    const style = getVfxStyle(strongest.attackerMoveSetId);
+    const tint = strongest.blocked ? style.blocked : style.screen;
+    if (strongest.kind === 'combo2' || strongest.kind === 'ultimate') {
+      this.screenBitmapFx.spawnFrameEcho(
+        renderer,
+        this.worldLayer,
+        STAGE_WIDTH,
+        STAGE_HEIGHT,
+        tint,
+        strongest.kind === 'ultimate' ? 48 : 30
+      );
+      this.screenBitmapFx.spawnBitmapScreenTear(strongest.kind === 'ultimate' ? 42 : 24, tint);
     }
   }
 

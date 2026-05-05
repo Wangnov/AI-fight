@@ -2,6 +2,8 @@ import { Container, Graphics, Sprite, Text } from 'pixi.js';
 import type { SpriteSet } from '../assets/SpriteSet';
 import { STAGE_HEIGHT, STAGE_WIDTH } from '../config/constants';
 import type { UltimateSpec } from '../config/moveSets';
+import { getVfxStyle } from '../config/visualLanguage';
+import { BitmapFxDirector } from './BitmapFxDirector';
 
 interface CinematicElement {
   obj: Container;
@@ -59,6 +61,7 @@ export class UltimateCinematic extends Container {
   private elapsed = 0;
   private readonly dark: Graphics;
   private readonly elements: CinematicElement[] = [];
+  private readonly bitmapFx: BitmapFxDirector;
   private readonly totalFrames: number;
 
   constructor(
@@ -73,6 +76,8 @@ export class UltimateCinematic extends Container {
       .fill(spec === 'altman' ? 0x000000 : spec === 'dario' ? 0x180b25 : 0x050b1a);
     this.dark.alpha = 0;
     this.addChild(this.dark);
+    this.bitmapFx = new BitmapFxDirector(vfx, scaleVfxDuration);
+    this.addChild(this.bitmapFx);
   }
 
   update(): void {
@@ -97,6 +102,8 @@ export class UltimateCinematic extends Container {
     if (this.spec === 'altman') this.tickAltman();
     else if (this.spec === 'dario') this.tickDario();
     else this.tickElon();
+
+    this.bitmapFx.update();
 
     // 推进现有 elements
     for (let i = this.elements.length - 1; i >= 0; i -= 1) {
@@ -184,12 +191,13 @@ export class UltimateCinematic extends Container {
       );
     }
     if (this.elapsed === this.when(250)) {
+      const style = getVfxStyle('altman');
       fire('flash', () => this.spawnFullscreenFlash(0xffffff, 14));
       fire('maskedShockwave', () =>
-        this.spawnMaskedReveal('shockwave', STAGE_HEIGHT * 0.58, 0xfef08a, 64, 1.15)
+        this.bitmapFx.spawnMaskedReveal('shockwave', STAGE_WIDTH / 2, STAGE_HEIGHT * 0.58, style.accent, 64, 1.15)
       );
       fire('additiveShockwave', () =>
-        this.spawnAdditiveBurst('shockwave', STAGE_WIDTH / 2, STAGE_HEIGHT * 0.58, 0x7dd3fc, 0.75, 58)
+        this.bitmapFx.spawnAdditiveBurst('shockwave', STAGE_WIDTH / 2, STAGE_HEIGHT * 0.58, style.screen, 0.75, 58)
       );
       fire('shockwave', () => this.spawnShockwave());
       fire('mushroom', () => this.spawnMushroom());
@@ -232,13 +240,14 @@ export class UltimateCinematic extends Container {
       fire('kyc3', () => this.spawnKYC(3, 60));
     }
     if (this.elapsed === this.when(330)) {
+      const style = getVfxStyle('dario');
       fire('flash', () => this.spawnFullscreenFlash(0xfb923c, 10));
       fire('pillar', () => this.spawnOrangePillar());
       fire('stampReveal', () =>
-        this.spawnMaskedReveal('access_denied_stamp', STAGE_HEIGHT * 0.5, 0xffedd5, 68, 0.9)
+        this.bitmapFx.spawnMaskedReveal('access_denied_stamp', STAGE_WIDTH / 2, STAGE_HEIGHT * 0.5, style.blocked, 68, 0.9)
       );
       fire('stampBurst', () =>
-        this.spawnAdditiveBurst('mini_stamps', STAGE_WIDTH / 2, STAGE_HEIGHT * 0.5, 0xff6b6b, 0.45, 54)
+        this.bitmapFx.spawnAdditiveBurst('mini_stamps', STAGE_WIDTH / 2, STAGE_HEIGHT * 0.5, style.accent, 0.45, 54)
       );
       fire('stamp', () => this.spawnAccessDeniedStamp());
       fire('miniStamps', () => this.spawnMiniStamps());
@@ -279,13 +288,15 @@ export class UltimateCinematic extends Container {
       );
     }
     if (this.elapsed === this.when(230)) {
+      const style = getVfxStyle('elon');
       fire('lines', () => this.spawnScreenLines());
-      fire('screenTear', () => this.spawnBitmapScreenTear());
+      fire('screenTear', () => this.bitmapFx.spawnBitmapScreenTear(48, style.screen));
     }
     if (this.elapsed === this.when(255)) {
+      const style = getVfxStyle('elon');
       fire('flash', () => this.spawnFullscreenFlash(0x93c5fd, 12));
       fire('orbitBurst', () =>
-        this.spawnAdditiveBurst('electric_orbit', STAGE_WIDTH / 2, STAGE_HEIGHT * 0.48, 0x93c5fd, 0.52, 72)
+        this.bitmapFx.spawnAdditiveBurst('electric_orbit', STAGE_WIDTH / 2, STAGE_HEIGHT * 0.48, style.screen, 0.52, 72)
       );
       fire('rocket', () => this.spawnRocketPlume());
       fire('hitText', () =>
@@ -387,116 +398,6 @@ export class UltimateCinematic extends Container {
           t.scale.set(1);
           t.alpha = 1;
         }
-      },
-    });
-  }
-
-  private spawnAdditiveBurst(
-    key: string,
-    x: number,
-    y: number,
-    tint: number,
-    baseScale: number,
-    duration: number
-  ): void {
-    const root = new Container();
-    root.x = x;
-    root.y = y;
-
-    for (let i = 0; i < 3; i += 1) {
-      const sprite = new Sprite(this.vfx.get(key));
-      sprite.anchor.set(0.5);
-      sprite.blendMode = i === 0 ? 'screen' : 'add';
-      sprite.tint = tint;
-      sprite.alpha = 0.58 - i * 0.12;
-      sprite.rotation = (i / 3) * Math.PI * 2;
-      sprite.scale.set(baseScale * (0.36 + i * 0.18));
-      root.addChild(sprite);
-    }
-
-    this.addChild(root);
-    this.elements.push({
-      obj: root,
-      birth: this.elapsed,
-      expire: this.elapsed + this.duration(duration),
-      tick: (age, total) => {
-        const p = age / total;
-        root.children.forEach((child, i) => {
-          const sprite = child as Sprite;
-          sprite.scale.set(baseScale * (0.44 + i * 0.22 + p * (1.15 + i * 0.28)));
-          sprite.rotation += 0.025 * (i % 2 === 0 ? 1 : -1);
-          sprite.alpha = Math.max(0, (0.72 - i * 0.14) * (1 - p));
-        });
-      },
-    });
-  }
-
-  private spawnMaskedReveal(
-    key: string,
-    y: number,
-    tint: number,
-    duration: number,
-    targetScale: number
-  ): void {
-    const root = new Container();
-    root.x = STAGE_WIDTH / 2;
-    root.y = y;
-
-    const sprite = new Sprite(this.vfx.get(key));
-    sprite.anchor.set(0.5);
-    sprite.blendMode = 'screen';
-    sprite.tint = tint;
-    sprite.alpha = 0.92;
-    sprite.scale.set(targetScale * 0.45);
-
-    const mask = new Graphics();
-    root.addChild(sprite);
-    root.addChild(mask);
-    root.mask = mask;
-
-    this.addChild(root);
-    this.elements.push({
-      obj: root,
-      birth: this.elapsed,
-      expire: this.elapsed + this.duration(duration),
-      tick: (age, total) => {
-        const p = age / total;
-        const eased = 1 - Math.pow(1 - p, 3);
-        mask.clear().circle(0, 0, 24 + eased * STAGE_WIDTH * 0.72).fill(0xffffff);
-        sprite.scale.set(targetScale * (0.45 + eased * 0.85));
-        sprite.rotation += 0.018;
-        sprite.alpha = p > 0.74 ? Math.max(0, (1 - p) / 0.26) : 0.92;
-      },
-    });
-  }
-
-  private spawnBitmapScreenTear(): void {
-    const root = new Container();
-
-    for (let i = 0; i < 2; i += 1) {
-      const sprite = new Sprite(this.vfx.get('screen_lines'));
-      sprite.anchor.set(0.5);
-      sprite.x = STAGE_WIDTH / 2;
-      sprite.y = STAGE_HEIGHT / 2;
-      sprite.width = STAGE_WIDTH * 1.2;
-      sprite.height = STAGE_HEIGHT * 1.2;
-      sprite.blendMode = 'screen';
-      sprite.tint = i === 0 ? 0x60a5fa : 0xffffff;
-      sprite.alpha = 0.34 - i * 0.1;
-      sprite.rotation = i === 0 ? 0.04 : -0.03;
-      root.addChild(sprite);
-    }
-
-    this.addChild(root);
-    this.elements.push({
-      obj: root,
-      birth: this.elapsed,
-      expire: this.elapsed + this.duration(48),
-      tick: (age, total) => {
-        const p = age / total;
-        root.x = Math.sin(age * 0.9) * 18 * (1 - p);
-        root.alpha = 0.65 * (1 - p);
-        root.scale.set(1 + p * 0.08);
       },
     });
   }

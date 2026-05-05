@@ -2,6 +2,8 @@ import { Container, Sprite, Text } from 'pixi.js';
 import type { SpriteSet } from '../assets/SpriteSet';
 import type { CombatEvent } from './CombatSystem';
 import type { MoveSetId } from '../config/moveSets';
+import { getVfxStyle } from '../config/visualLanguage';
+import { BitmapFxDirector } from './BitmapFxDirector';
 
 interface ActiveSpark {
   sprite: Sprite;
@@ -31,9 +33,12 @@ interface HitTextStyle {
 export class HitEffectsLayer extends Container {
   private sparks: ActiveSpark[] = [];
   private texts: ActiveText[] = [];
+  private readonly bitmapFx: BitmapFxDirector;
 
   constructor(private readonly vfx: SpriteSet) {
     super();
+    this.bitmapFx = new BitmapFxDirector(vfx);
+    this.addChild(this.bitmapFx);
   }
 
   /** 监听一组 CombatEvent，按攻击类型挑字效 + 火花 */
@@ -49,11 +54,13 @@ export class HitEffectsLayer extends Container {
         ev.blocked ? `GUARD -${ev.damage}` : `-${ev.damage}`,
         ev.blocked ? 0x93c5fd : 0xffffff
       );
+      this.bitmapFx.spawnImpactBurst(ev.attackerMoveSetId, point.x, point.y, ev.kind, ev.blocked);
     }
   }
 
   private spawnSpark(x: number, y: number, ev: CombatEvent): void {
-    const sprite = new Sprite(this.vfx.get(ev.blocked ? 'block_flash' : 'hit_spark'));
+    const style = getVfxStyle(ev.attackerMoveSetId);
+    const sprite = new Sprite(this.vfx.get(ev.blocked ? 'block_flash' : style.sparkKey));
     sprite.anchor.set(0.5);
     sprite.x = x + (Math.random() - 0.5) * 16;
     sprite.y = y + (Math.random() - 0.5) * 12;
@@ -66,7 +73,8 @@ export class HitEffectsLayer extends Container {
     const baseScale = sizePx / Math.max(sprite.texture.width, 1);
     // 把 baseScale 存进 sprite.scale，update 用 ratio 调整
     sprite.scale.set(baseScale);
-    sprite.tint = ev.blocked ? 0x90c7ff : 0xffffff;
+    sprite.blendMode = ev.blocked ? 'screen' : 'add';
+    sprite.tint = ev.blocked ? style.blocked : style.primary;
     sprite.rotation = Math.random() * Math.PI * 2;
     this.addChild(sprite);
     this.sparks.push({
@@ -145,6 +153,8 @@ export class HitEffectsLayer extends Container {
   }
 
   update(): void {
+    this.bitmapFx.update();
+
     // 推进 sparks
     for (let i = this.sparks.length - 1; i >= 0; i -= 1) {
       const s = this.sparks[i];

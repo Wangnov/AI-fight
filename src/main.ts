@@ -96,6 +96,7 @@ import {
           new BattleScene({
             input,
             mode,
+            renderer: app.renderer,
             selections,
             sprites: {
               altman: assets.altman,
