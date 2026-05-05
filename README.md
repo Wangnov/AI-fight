@@ -27,19 +27,9 @@
 
 ### 投币开始
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&amp;size=20&amp;duration=2400&amp;pause=500&amp;color=66FFB0&amp;center=true&amp;vCenter=true&amp;width=320&amp;lines=SAM%3A+%E5%8F%91%E7%89%88%E6%A8%A1%E5%9E%8B;PROMPT+PRESSURE;SOTA+IMPACT" alt="Sam green Chinese typing slogan">
-    </td>
-    <td align="center" width="33%">
-      <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&amp;size=20&amp;duration=2400&amp;pause=500&amp;color=FF9C3F&amp;center=true&amp;vCenter=true&amp;width=320&amp;lines=DARIO%3A+%E6%8E%A7%E5%88%B6%E8%AE%BF%E9%97%AE;KYC+CHECKPOINT;SAFETY+STAMP" alt="Dario orange Chinese typing slogan">
-    </td>
-    <td align="center" width="33%">
-      <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&amp;size=20&amp;duration=2400&amp;pause=500&amp;color=6BB6FF&amp;center=true&amp;vCenter=true&amp;width=320&amp;lines=ELON%3A+%E5%A4%8D%E7%94%A8%E5%85%A5%E8%BD%A8;GROK+VOLTAGE;ROCKET+LOOP" alt="Elon blue Chinese typing slogan">
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./docs/readme/role-slogans-cn.svg" width="100%" alt="AI Fight 中文角色标语">
+</p>
 
 <p align="center">
   <img src="./docs/readme/arcade-marquee-cn.svg" width="100%" alt="AI Fight 中文街机灯牌">
@@ -49,23 +39,19 @@
   <img src="./docs/readme/readme-bitmap-stage.png" width="100%" alt="AI Fight 中文位图舞台">
 </p>
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <a href="https://aifight.wangnov-ai.com/">
-        <img src="./docs/screenshots/01-menu.png" width="100%" alt="AI Fight 首屏">
-      </a>
-      <p>
-        <a href="https://aifight.wangnov-ai.com/"><img src="https://img.shields.io/badge/开始游戏-00e5ff?style=flat-square" alt="开始游戏"></a>
-        <a href="#readme-en"><img src="https://img.shields.io/badge/ENGLISH-6bb6ff?style=flat-square" alt="English"></a>
-      </p>
-    </td>
-    <td align="center" width="50%">
-      <img src="./docs/readme/sam-ultimate-pulse.gif" width="100%" alt="Sam 大招动效">
-      <p><sub>Sam 大招命中循环</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://aifight.wangnov-ai.com/">
+    <img src="./docs/screenshots/01-menu.png" width="49%" alt="AI Fight 首屏">
+  </a>
+  <img src="./docs/readme/sam-ultimate-pulse.gif" width="49%" alt="Sam 大招动效">
+</p>
+
+<p align="center">
+  <a href="https://aifight.wangnov-ai.com/"><img src="https://img.shields.io/badge/开始游戏-00e5ff?style=flat-square" alt="开始游戏"></a>
+  <a href="#readme-en"><img src="https://img.shields.io/badge/ENGLISH-6bb6ff?style=flat-square" alt="English"></a>
+  <br>
+  <sub>首屏街机柜台 / Sam 大招命中循环</sub>
+</p>
 
 <p align="center">
   <img src="./docs/readme/system-loop-cn.svg" width="100%" alt="AI Fight 中文游戏循环">
@@ -73,59 +59,40 @@
 
 ### 斗士柜
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="./public/sprites/scene/portrait_altman.png" width="100%" alt="Sam 头像">
-      <h3>Sam</h3>
-      <p><strong>Prompt 压力。</strong><br><sub>青绿系发版能量、benchmark 拳和 SOTA 命中字。</sub></p>
-    </td>
-    <td align="center" width="33%">
-      <img src="./public/sprites/scene/portrait_dario.png" width="100%" alt="Dario 头像">
-      <h3>Dario</h3>
-      <p><strong>访问控制。</strong><br><sub>橙紫系安全压力、KYC 印章和拒绝访问大招。</sub></p>
-    </td>
-    <td align="center" width="33%">
-      <img src="./public/sprites/scene/portrait_elon.png" width="100%" alt="Elon 头像">
-      <h3>Elon</h3>
-      <p><strong>轨道升级。</strong><br><sub>电蓝系 Grok 能量、火箭、复用循环和发射窗口混乱。</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./public/sprites/scene/portrait_altman.png" width="31%" alt="Sam 头像">
+  <img src="./public/sprites/scene/portrait_dario.png" width="31%" alt="Dario 头像">
+  <img src="./public/sprites/scene/portrait_elon.png" width="31%" alt="Elon 头像">
+</p>
+
+<p align="center">
+  <strong>Sam</strong>：Prompt 压力、青绿发版能量、SOTA 命中字。<br>
+  <strong>Dario</strong>：访问控制、橙紫安全压力、KYC 印章。<br>
+  <strong>Elon</strong>：轨道升级、电蓝 Grok 能量、火箭复用循环。
+</p>
 
 ### 终结技
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="./docs/readme/sam-ultimate-pulse.gif" width="100%" alt="Sam 大招">
-      <sub><strong>Sam：</strong>我们到底发了什么？</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="./docs/screenshots/05-dario-ultimate.png" width="100%" alt="Dario 大招">
-      <sub><strong>Dario：</strong>你没有被选中。</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="./docs/screenshots/06-elon-ultimate.png" width="100%" alt="Elon 大招">
-      <sub><strong>Elon：</strong>复用入轨。</sub>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./docs/readme/sam-ultimate-pulse.gif" width="31%" alt="Sam 大招">
+  <img src="./docs/screenshots/05-dario-ultimate.png" width="31%" alt="Dario 大招">
+  <img src="./docs/screenshots/06-elon-ultimate.png" width="31%" alt="Elon 大招">
+</p>
+
+<p align="center">
+  <strong>Sam：</strong>我们到底发了什么？ · <strong>Dario：</strong>你没有被选中。 · <strong>Elon：</strong>复用入轨。
+</p>
 
 ### 战斗画面
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="./docs/screenshots/02-character-select.png" width="100%" alt="选人界面">
-      <sub>选人页、街机指示器和同角色 P1/P2 表达。</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="./docs/screenshots/03-hit-feedback.png" width="100%" alt="命中反馈">
-      <sub>命中爆点、伤害字、hitstop 和屏幕冲击。</sub>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./docs/screenshots/02-character-select.png" width="49%" alt="选人界面">
+  <img src="./docs/screenshots/03-hit-feedback.png" width="49%" alt="命中反馈">
+</p>
+
+<p align="center">
+  <sub>选人页、街机指示器和同角色 P1/P2 表达；命中爆点、伤害字、hitstop 和屏幕冲击。</sub>
+</p>
 
 ### 玩法
 
@@ -194,19 +161,9 @@ npm run cf:deploy
 
 ### Insert Coin
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&amp;size=20&amp;duration=2400&amp;pause=500&amp;color=66FFB0&amp;center=true&amp;vCenter=true&amp;width=320&amp;lines=SAM%3A+SHIP+THE+MODEL;PROMPT+PRESSURE;SOTA+IMPACT" alt="Sam green typing slogan">
-    </td>
-    <td align="center" width="33%">
-      <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&amp;size=20&amp;duration=2400&amp;pause=500&amp;color=FF9C3F&amp;center=true&amp;vCenter=true&amp;width=320&amp;lines=DARIO%3A+CONTROL+THE+ACCESS;KYC+CHECKPOINT;SAFETY+STAMP" alt="Dario orange typing slogan">
-    </td>
-    <td align="center" width="33%">
-      <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&amp;size=20&amp;duration=2400&amp;pause=500&amp;color=6BB6FF&amp;center=true&amp;vCenter=true&amp;width=320&amp;lines=ELON%3A+REUSE+TO+ORBIT;GROK+VOLTAGE;ROCKET+LOOP" alt="Elon blue typing slogan">
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./docs/readme/role-slogans-en.svg" width="100%" alt="AI Fight English role slogans">
+</p>
 
 <p align="center">
   <img src="./docs/readme/arcade-marquee.svg" width="100%" alt="AI Fight English arcade marquee">
@@ -216,23 +173,19 @@ npm run cf:deploy
   <img src="./docs/readme/readme-bitmap-stage.png" width="100%" alt="AI Fight generated arcade stage">
 </p>
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <a href="https://aifight.wangnov-ai.com/">
-        <img src="./docs/screenshots/01-menu.png" width="100%" alt="AI Fight title screen">
-      </a>
-      <p>
-        <a href="https://aifight.wangnov-ai.com/"><img src="https://img.shields.io/badge/START-GAME-00e5ff?style=flat-square" alt="Start game"></a>
-        <a href="#readme-cn"><img src="https://img.shields.io/badge/中文-ff7a18?style=flat-square" alt="Chinese docs"></a>
-      </p>
-    </td>
-    <td align="center" width="50%">
-      <img src="./docs/readme/sam-ultimate-pulse.gif" width="100%" alt="Sam ultimate animated pulse">
-      <p><sub>Sam ultimate impact loop</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://aifight.wangnov-ai.com/">
+    <img src="./docs/screenshots/01-menu.png" width="49%" alt="AI Fight title screen">
+  </a>
+  <img src="./docs/readme/sam-ultimate-pulse.gif" width="49%" alt="Sam ultimate animated pulse">
+</p>
+
+<p align="center">
+  <a href="https://aifight.wangnov-ai.com/"><img src="https://img.shields.io/badge/START-GAME-00e5ff?style=flat-square" alt="Start game"></a>
+  <a href="#readme-cn"><img src="https://img.shields.io/badge/中文-ff7a18?style=flat-square" alt="Chinese docs"></a>
+  <br>
+  <sub>Title cabinet / Sam ultimate impact loop</sub>
+</p>
 
 <p align="center">
   <img src="./docs/readme/system-loop.svg" width="100%" alt="AI Fight gameplay system loop">
@@ -240,59 +193,40 @@ npm run cf:deploy
 
 ### The Cabinet
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="./public/sprites/scene/portrait_altman.png" width="100%" alt="Sam portrait">
-      <h3>Sam</h3>
-      <p><strong>Prompt pressure.</strong><br><sub>Green/cyan shipping energy, benchmark punches, and SOTA impact text.</sub></p>
-    </td>
-    <td align="center" width="33%">
-      <img src="./public/sprites/scene/portrait_dario.png" width="100%" alt="Dario portrait">
-      <h3>Dario</h3>
-      <p><strong>Access control.</strong><br><sub>Orange/purple safety pressure, KYC stamps, and region-blocked ultimates.</sub></p>
-    </td>
-    <td align="center" width="33%">
-      <img src="./public/sprites/scene/portrait_elon.png" width="100%" alt="Elon portrait">
-      <h3>Elon</h3>
-      <p><strong>Orbital escalation.</strong><br><sub>Electric blue Grok energy, rockets, reuse loops, and launch-window chaos.</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./public/sprites/scene/portrait_altman.png" width="31%" alt="Sam portrait">
+  <img src="./public/sprites/scene/portrait_dario.png" width="31%" alt="Dario portrait">
+  <img src="./public/sprites/scene/portrait_elon.png" width="31%" alt="Elon portrait">
+</p>
+
+<p align="center">
+  <strong>Sam</strong>: prompt pressure, green/cyan shipping energy, SOTA impact text.<br>
+  <strong>Dario</strong>: access control, orange/purple safety pressure, KYC stamps.<br>
+  <strong>Elon</strong>: orbital escalation, electric blue Grok energy, rocket reuse loops.
+</p>
 
 ### Finishers
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="./docs/readme/sam-ultimate-pulse.gif" width="100%" alt="Sam ultimate animated attack">
-      <sub><strong>Sam:</strong> What have we shipped?</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="./docs/screenshots/05-dario-ultimate.png" width="100%" alt="Dario ultimate attack">
-      <sub><strong>Dario:</strong> You were not selected.</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="./docs/screenshots/06-elon-ultimate.png" width="100%" alt="Elon ultimate attack">
-      <sub><strong>Elon:</strong> Reused to orbit.</sub>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./docs/readme/sam-ultimate-pulse.gif" width="31%" alt="Sam ultimate animated attack">
+  <img src="./docs/screenshots/05-dario-ultimate.png" width="31%" alt="Dario ultimate attack">
+  <img src="./docs/screenshots/06-elon-ultimate.png" width="31%" alt="Elon ultimate attack">
+</p>
+
+<p align="center">
+  <strong>Sam:</strong> What have we shipped? · <strong>Dario:</strong> You were not selected. · <strong>Elon:</strong> Reused to orbit.
+</p>
 
 ### Battle Shots
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="./docs/screenshots/02-character-select.png" width="100%" alt="Character select">
-      <sub>Character select, arcade cursor language, and same-fighter P1/P2 indicators.</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="./docs/screenshots/03-hit-feedback.png" width="100%" alt="Battle hit feedback">
-      <sub>Readable hit feedback: impact burst, damage text, hitstop, and screen punch.</sub>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./docs/screenshots/02-character-select.png" width="49%" alt="Character select">
+  <img src="./docs/screenshots/03-hit-feedback.png" width="49%" alt="Battle hit feedback">
+</p>
+
+<p align="center">
+  <sub>Character select, arcade cursor language, same-fighter P1/P2 indicators, impact bursts, damage text, hitstop, and screen punch.</sub>
+</p>
 
 ### Gameplay
 
@@ -353,23 +287,13 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for the Cloudflare release path.
 
 ### Project Layout
 
-```text
-src/
-  assets/          sprite/vfx registries
-  config/          constants, characters, moves, stages, visual language
-  core/            Scene and SceneManager
-  entities/        Fighter / Projectile
-  input/           keyboard and virtual AI input
-  scenes/          Menu / Select / Battle / Result
-  systems/         combat, VFX, AI, sound, screen feedback
-  ui/              HUD
-public/
-  sprites/         fighter, scene, and VFX bitmap assets
-docs/
-  readme/          README stage graphics
-  screenshots/     README gameplay screenshots
-tools/             asset generation, slicing, screenshots, and normalization helpers
-```
+- `src/assets/`: sprite and VFX registries.
+- `src/config/`: constants, characters, moves, stages, and visual language.
+- `src/scenes/`: menu, select, battle, and result scenes.
+- `src/systems/`: combat, VFX, AI, sound, and screen feedback.
+- `public/sprites/`: fighter, scene, and VFX bitmap assets.
+- `docs/readme/` and `docs/screenshots/`: README presentation assets.
+- `tools/`: asset generation, slicing, screenshots, and normalization helpers.
 
 ## Notice
 

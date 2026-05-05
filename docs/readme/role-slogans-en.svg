@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 170" role="img" aria-labelledby="title desc">
+  <title id="title">AI Fight English role slogans</title>
+  <desc id="desc">Arcade slogans for Sam, Dario, and Elon.</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" x2="1">
+      <stop offset="0" stop-color="#06131f"/>
+      <stop offset="0.55" stop-color="#09111b"/>
+      <stop offset="1" stop-color="#110a20"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-40%" width="140%" height="180%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="scan" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M0 7H8" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="170" rx="18" fill="#05070d"/>
+  <rect x="18" y="18" width="1164" height="134" rx="14" fill="url(#panel)" stroke="#273348" stroke-width="2"/>
+  <rect x="18" y="18" width="1164" height="134" rx="14" fill="url(#scan)" opacity="0.55"/>
+  <g font-family="Impact, Arial Black, sans-serif" text-anchor="middle" filter="url(#glow)">
+    <g transform="translate(210 86)">
+      <rect x="-155" y="-44" width="310" height="88" rx="10" fill="#06131f" stroke="#66ffb0" stroke-width="3"/>
+      <text y="-7" font-size="28" fill="#66ffb0">SAM · SHIP</text>
+      <text y="27" font-family="monospace" font-size="16" fill="#dfffea">PROMPT / SOTA / BENCH</text>
+    </g>
+    <g transform="translate(600 86)">
+      <rect x="-155" y="-44" width="310" height="88" rx="10" fill="#1a0d08" stroke="#ff9c3f" stroke-width="3"/>
+      <text y="-7" font-size="28" fill="#ff9c3f">DARIO · CONTROL</text>
+      <text y="27" font-family="monospace" font-size="16" fill="#ffe1bf">KYC / SAFETY / DENIED</text>
+    </g>
+    <g transform="translate(990 86)">
+      <rect x="-155" y="-44" width="310" height="88" rx="10" fill="#090f25" stroke="#6bb6ff" stroke-width="3"/>
+      <text y="-7" font-size="28" fill="#6bb6ff">ELON · ORBIT</text>
+      <text y="27" font-family="monospace" font-size="16" fill="#d9ecff">GROK / ROCKET / REUSE</text>
+    </g>
+  </g>
+</svg>
