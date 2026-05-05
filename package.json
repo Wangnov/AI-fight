@@ -4,6 +4,12 @@
   "version": "0.0.1",
   "type": "module",
   "description": "AI 公司全明星大乱斗 — H5 + PixiJS 讽刺向 2D 格斗 MVP",
+  "homepage": "https://aifight.wangnov-ai.com/",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wangnov/AI-fight.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
