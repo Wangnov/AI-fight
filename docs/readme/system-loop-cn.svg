@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 190" role="img" aria-labelledby="title desc">
+  <title id="title">AI Fight 游戏循环</title>
+  <desc id="desc">从选人、战斗、大招、构建到发布的五步中文街机流程。</desc>
+  <defs>
+    <linearGradient id="edge" x1="0" x2="1">
+      <stop offset="0" stop-color="#00e5ff"/>
+      <stop offset="0.5" stop-color="#ff7a18"/>
+      <stop offset="1" stop-color="#7d34ff"/>
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-30%" width="140%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="190" rx="18" fill="#05070d"/>
+  <rect x="15" y="15" width="1170" height="160" rx="15" fill="#0a1020" stroke="url(#edge)" stroke-width="3"/>
+  <g font-family="Impact, Arial Black, PingFang SC, Microsoft YaHei, sans-serif" text-anchor="middle" filter="url(#softGlow)">
+    <g transform="translate(136 55)">
+      <rect x="-90" y="-18" width="180" height="92" rx="10" fill="#06131f" stroke="#00e5ff" stroke-width="2"/>
+      <text y="21" font-size="26" fill="#ffffff">选人</text>
+      <text y="52" font-family="monospace" font-size="13" fill="#8ef7ff">P1 / P2 READY</text>
+    </g>
+    <g transform="translate(368 55)">
+      <rect x="-90" y="-18" width="180" height="92" rx="10" fill="#16100c" stroke="#ff7a18" stroke-width="2"/>
+      <text y="21" font-size="26" fill="#ffffff">开打</text>
+      <text y="52" font-family="monospace" font-size="13" fill="#ffd7a8">HITSTOP + SHAKE</text>
+    </g>
+    <g transform="translate(600 55)">
+      <rect x="-90" y="-18" width="180" height="92" rx="10" fill="#10132a" stroke="#7d34ff" stroke-width="2"/>
+      <text y="21" font-size="26" fill="#ffffff">大招</text>
+      <text y="52" font-family="monospace" font-size="13" fill="#ddd3ff">BITMAP VFX</text>
+    </g>
+    <g transform="translate(832 55)">
+      <rect x="-90" y="-18" width="180" height="92" rx="10" fill="#06131f" stroke="#00e5ff" stroke-width="2"/>
+      <text y="21" font-size="26" fill="#ffffff">构建</text>
+      <text y="52" font-family="monospace" font-size="13" fill="#8ef7ff">VITE DIST</text>
+    </g>
+    <g transform="translate(1064 55)">
+      <rect x="-90" y="-18" width="180" height="92" rx="10" fill="#16100c" stroke="#ff7a18" stroke-width="2"/>
+      <text y="21" font-size="26" fill="#ffffff">发布</text>
+      <text y="52" font-family="monospace" font-size="13" fill="#ffd7a8">CLOUDFLARE</text>
+    </g>
+  </g>
+  <g stroke="url(#edge)" stroke-width="3" fill="none" opacity="0.7">
+    <path d="M232 82H272"/>
+    <path d="M464 82H504"/>
+    <path d="M696 82H736"/>
+    <path d="M928 82H968"/>
+  </g>
+  <text x="600" y="154" text-anchor="middle" font-family="PingFang SC, Microsoft YaHei, monospace" font-size="16" fill="#d7dce8">浏览器游戏循环：选斗士，制造打击感，发出混乱，然后把整台街机发布到云上。</text>
+</svg>
