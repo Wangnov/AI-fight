@@ -515,6 +515,7 @@ export class BattleScene extends Scene {
       const events: CombatEvent[] = [
         {
           attackerId: this.cinematicAttackerId,
+          attackerMoveSetId: attacker.preset.moveSetId,
           targetId: target.id,
           kind: 'ultimate',
           blocked: result.blocked,

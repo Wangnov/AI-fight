@@ -1,6 +1,7 @@
 import { Container, Sprite, Text } from 'pixi.js';
 import type { SpriteSet } from '../assets/SpriteSet';
 import type { CombatEvent } from './CombatSystem';
+import type { MoveSetId } from '../config/moveSets';
 
 interface ActiveSpark {
   sprite: Sprite;
@@ -14,6 +15,12 @@ interface ActiveText {
   framesLeft: number;
   totalFrames: number;
   vy: number;
+}
+
+interface HitTextStyle {
+  fill: number;
+  stroke: number;
+  shadow: number;
 }
 
 /**
@@ -34,9 +41,8 @@ export class HitEffectsLayer extends Container {
     for (const ev of events) {
       const point = ev.hitPoint;
       this.spawnSpark(point.x, point.y, ev);
-      const phrase = pickPhrase(ev);
-      const color = ev.attackerId === 'P1' ? 0x4ade80 : 0xfb923c;
-      this.spawnText(point.x, point.y - 36, phrase, color, ev.kind === 'ultimate');
+      const feedback = pickFeedback(ev);
+      this.spawnText(point.x, point.y - 36, feedback.phrase, feedback.style, ev.kind === 'ultimate');
       this.spawnDamageText(
         point.x,
         point.y + 24,
@@ -75,7 +81,7 @@ export class HitEffectsLayer extends Container {
     x: number,
     y: number,
     content: string,
-    color: number,
+    textStyle: HitTextStyle,
     isBig: boolean
   ): void {
     const text = new Text({
@@ -83,11 +89,11 @@ export class HitEffectsLayer extends Container {
       style: {
         fontFamily: 'system-ui, Arial Black, sans-serif',
         fontSize: isBig ? 56 : 28,
-        fill: color,
+        fill: textStyle.fill,
         fontWeight: 'bold',
-        stroke: { color: 0x000000, width: isBig ? 6 : 4 },
+        stroke: { color: textStyle.stroke, width: isBig ? 7 : 4 },
         dropShadow: {
-          color: 0x000000,
+          color: textStyle.shadow,
           blur: 6,
           distance: 4,
           angle: Math.PI / 4,
@@ -183,33 +189,67 @@ export class HitEffectsLayer extends Container {
 }
 
 // === 字效池（讽刺向，对应策划案）===
-const PHRASES: Record<
-  'P1' | 'P2',
-  { jab: string[]; combo1: string[]; combo2: string[]; ultimate: string[] }
-> = {
-  P1: {
+type PhraseSet = Record<CombatEvent['kind'], string[]>;
+
+const PHRASES: Record<MoveSetId, PhraseSet> = {
+  altman: {
     jab: ['Better Prompt!', 'Summarize!', 'Ship it!'],
     combo1: ['LGTM', 'Ship it', 'Fix pushed'],
     combo2: ['SOTA!', 'Cherry-picked!'],
     ultimate: ['WHAT HAVE WE SHIPPED?!'],
   },
-  P2: {
+  dario: {
     jab: ['Be Helpful.', 'Be Harmless.', 'Be Honest.'],
     combo1: ['ZERO-DAY?', 'APPLY FOR ACCESS'],
     combo2: ['Harmless!', 'Denied!'],
     ultimate: ['VERIFICATION FAILED — UNSUPPORTED REGION'],
   },
+  elon: {
+    jab: ['X POST!', 'BOOST!', 'BLUE CHECK!'],
+    combo1: ['GROK PING!', 'ORBITAL!', 'STARLINKED!'],
+    combo2: ['LAUNCH!', 'FULL SEND!', 'BOOSTER!'],
+    ultimate: ['MARS MODE: ENGAGED!'],
+  },
 };
 
-const BLOCK_PHRASES: Record<'P1' | 'P2', Partial<Record<CombatEvent['kind'], string>>> = {
-  P1: { combo1: 'Merge conflict', combo2: 'Cherry-picked!', jab: 'Blocked!' },
-  P2: { combo1: 'Not Generally Available', combo2: 'Denied', jab: 'Compliant.' },
+const BLOCK_PHRASES: Record<MoveSetId, Partial<Record<CombatEvent['kind'], string>>> = {
+  altman: { combo1: 'Merge conflict', combo2: 'Cherry-picked!', jab: 'Blocked!' },
+  dario: { combo1: 'Not Generally Available', combo2: 'Denied', jab: 'Compliant.' },
+  elon: { combo1: 'Rate limited', combo2: 'Launch scrubbed', jab: 'Muted!' },
 };
 
-function pickPhrase(ev: CombatEvent): string {
+const HIT_TEXT_STYLES: Record<MoveSetId, Record<CombatEvent['kind'], HitTextStyle>> = {
+  altman: {
+    jab: { fill: 0x4ade80, stroke: 0x000000, shadow: 0x052e16 },
+    combo1: { fill: 0x22d3ee, stroke: 0x000000, shadow: 0x083344 },
+    combo2: { fill: 0x86efac, stroke: 0x000000, shadow: 0x14532d },
+    ultimate: { fill: 0xfacc15, stroke: 0x000000, shadow: 0x7f1d1d },
+  },
+  dario: {
+    jab: { fill: 0xfb923c, stroke: 0x000000, shadow: 0x431407 },
+    combo1: { fill: 0xc084fc, stroke: 0x000000, shadow: 0x3b0764 },
+    combo2: { fill: 0xfdba74, stroke: 0x000000, shadow: 0x7c2d12 },
+    ultimate: { fill: 0xf97316, stroke: 0x000000, shadow: 0x431407 },
+  },
+  elon: {
+    jab: { fill: 0x38bdf8, stroke: 0x020617, shadow: 0x075985 },
+    combo1: { fill: 0xa78bfa, stroke: 0x020617, shadow: 0x4c1d95 },
+    combo2: { fill: 0x22d3ee, stroke: 0x020617, shadow: 0x0e7490 },
+    ultimate: { fill: 0xfacc15, stroke: 0x020617, shadow: 0x7c3aed },
+  },
+};
+
+function pickFeedback(ev: CombatEvent): { phrase: string; style: HitTextStyle } {
+  const moveSetId = ev.attackerMoveSetId;
   if (ev.blocked) {
-    return BLOCK_PHRASES[ev.attackerId][ev.kind] ?? 'Blocked!';
+    return {
+      phrase: BLOCK_PHRASES[moveSetId][ev.kind] ?? 'Blocked!',
+      style: HIT_TEXT_STYLES[moveSetId][ev.kind],
+    };
   }
-  const pool = PHRASES[ev.attackerId][ev.kind];
-  return pool[Math.floor(Math.random() * pool.length)];
+  const pool = PHRASES[moveSetId][ev.kind];
+  return {
+    phrase: pool[Math.floor(Math.random() * pool.length)],
+    style: HIT_TEXT_STYLES[moveSetId][ev.kind],
+  };
 }

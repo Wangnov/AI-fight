@@ -29,6 +29,7 @@ class FrameRule:
     bottom_padding: int = 24
     center_x: int = 512
     min_material_h: int | None = None
+    preserve_aspect: bool = False
 
 
 DEFAULT_RULE = FrameRule(max_material_w=640, max_material_h=910, min_material_h=880)
@@ -54,8 +55,20 @@ RULES: dict[str, FrameRule] = {
     "launch_pose": FrameRule(max_material_w=600, max_material_h=870, min_material_h=850),
     "rocket_swing": FrameRule(max_material_w=600, max_material_h=860, min_material_h=840),
     # Grounded defeat poses are intentionally wide and low.
-    "knockdown": FrameRule(max_material_w=950, max_material_h=430, min_material_h=395),
-    "lose": FrameRule(max_material_w=900, max_material_h=500, min_material_h=440),
+    # Defeat poses must stay anatomical. Non-uniform scale makes the body look
+    # horizontally stretched, which is very visible in-ground.
+    "knockdown": FrameRule(
+        max_material_w=950,
+        max_material_h=430,
+        min_material_h=395,
+        preserve_aspect=True,
+    ),
+    "lose": FrameRule(
+        max_material_w=900,
+        max_material_h=500,
+        min_material_h=440,
+        preserve_aspect=True,
+    ),
 }
 
 
@@ -118,6 +131,10 @@ def normalize_one(path: Path, rule: FrameRule, dry_run: bool) -> str:
 
     sx = min(1.0, rule.max_material_w / mat_w)
     sy = min(1.0, rule.max_material_h / mat_h)
+    if rule.preserve_aspect:
+        scale = min(sx, sy)
+        sx = scale
+        sy = scale
 
     crop = image.crop(full)
     new_w = max(1, round(crop.width * sx))

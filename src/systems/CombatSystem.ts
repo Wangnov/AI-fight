@@ -10,6 +10,7 @@ import {
   SHAKE_DURATION_FRAMES,
 } from '../config/constants';
 import type { AABB } from '../types';
+import type { MoveSetId } from '../config/moveSets';
 
 export interface EffectsAdapter {
   shake(amplitude: number, duration: number): void;
@@ -18,6 +19,7 @@ export interface EffectsAdapter {
 
 export interface CombatEvent {
   attackerId: 'P1' | 'P2';
+  attackerMoveSetId: MoveSetId;
   targetId: 'P1' | 'P2';
   kind: 'jab' | 'combo1' | 'combo2' | 'ultimate';
   blocked: boolean;
@@ -111,6 +113,7 @@ export class CombatSystem {
 
     this.events.push({
       attackerId: attacker.id,
+      attackerMoveSetId: attacker.preset.moveSetId,
       targetId: target.id,
       kind: active.attack.kind,
       blocked: result.blocked,
@@ -130,6 +133,7 @@ export class CombatSystem {
         const hurt = f.getHurtbox();
         if (!intersects(projectileBox, hurt)) continue;
         const hitPoint = intersectionCenter(projectileBox, hurt);
+        const owner = this.fighters.find((x) => x.id === p.ownerId);
 
         const dir: 1 | -1 = p.vx >= 0 ? 1 : -1;
         const result = f.takeHit({
@@ -141,7 +145,6 @@ export class CombatSystem {
           energyOnHit: p.energyGain,
         });
         if (!result.blocked) {
-          const owner = this.fighters.find((x) => x.id === p.ownerId);
           if (owner) owner.addEnergy(p.energyGain);
         }
         f.hitstopFrames = Math.max(f.hitstopFrames, p.hitstopFrames);
@@ -149,6 +152,7 @@ export class CombatSystem {
 
         this.events.push({
           attackerId: p.ownerId,
+          attackerMoveSetId: owner?.preset.moveSetId ?? 'altman',
           targetId: f.id,
           kind: 'combo1',
           blocked: result.blocked,
