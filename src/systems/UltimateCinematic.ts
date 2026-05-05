@@ -10,16 +10,45 @@ interface CinematicElement {
   tick?: (age: number, total: number) => void;
 }
 
+const CHARACTER_PHASE_TIME_SCALE = 0.82;
+const VFX_TIME_SCALE = 1.28;
+
+const BASE_VFX_ANCHOR_FRAMES: Record<UltimateSpec, number> = {
+  altman: 90,
+  dario: 150,
+  elon: 120,
+};
+
+const BASE_TOTAL_FRAMES: Record<UltimateSpec, number> = {
+  altman: 300,
+  dario: 380,
+  elon: 340,
+};
+
+function scaleCharacterFrame(frame: number): number {
+  return Math.max(1, Math.round(frame * CHARACTER_PHASE_TIME_SCALE));
+}
+
+function scaleVfxFrame(spec: UltimateSpec, frame: number): number {
+  const anchor = BASE_VFX_ANCHOR_FRAMES[spec];
+  const scaledAnchor = scaleCharacterFrame(anchor);
+  if (frame <= anchor) return scaleCharacterFrame(frame);
+  return Math.round(scaledAnchor + (frame - anchor) * VFX_TIME_SCALE);
+}
+
+function scaleVfxDuration(frames: number): number {
+  return Math.max(1, Math.round(frames * VFX_TIME_SCALE));
+}
+
 /**
  * 大招分镜演出（独立于 Fighter attack 计时）。
  *
  * 奥特曼"椅子瘫坐核爆"：黑屏 → 椅子降落 → "OH MAN..." 大字 →
- * 弹起冲击波 + 蘑菇云 → 整理外套台词。180 帧 ≈ 3 秒。
+ * 弹起冲击波 + 蘑菇云 → 整理外套台词。
  *
  * 达里奥"KYC 审判"：黑屏 + 教堂光 → "Identity Verification Required" →
  * KYC 弹窗 step1/2/3 → 红章降临 + 光柱 + mini 红章雨 →
  * "YOU WERE NOT SELECTED BY CLAUDE." → "For your safety." 收招。
- * 240 帧 ≈ 4 秒。
  *
  * Elon Mask"Orbit Launch"：黑屏 + 轨道电光 → keynote pose →
  * countdown → rocket plume + screen lines → 收起遥控器。
@@ -37,8 +66,8 @@ export class UltimateCinematic extends Container {
     private readonly spec: UltimateSpec
   ) {
     super();
-    // 延长以达成 KOF 级史诗感：Altman 5s, Dario 6.3s, Elon 5.7s
-    this.totalFrames = spec === 'altman' ? 300 : spec === 'dario' ? 380 : 340;
+    // VFX 分镜整体放慢一点；人物 pose 阶段独立提速，避免站桩拖沓。
+    this.totalFrames = scaleVfxFrame(spec, BASE_TOTAL_FRAMES[spec]);
     this.dark = new Graphics()
       .rect(0, 0, STAGE_WIDTH, STAGE_HEIGHT)
       .fill(spec === 'altman' ? 0x000000 : spec === 'dario' ? 0x180b25 : 0x050b1a);
@@ -50,9 +79,9 @@ export class UltimateCinematic extends Container {
     this.elapsed += 1;
 
     // 黑屏节奏：character 动作期间屏幕清晰，VFX 阶段才渐黑
-    const charPhaseEnd = this.spec === 'altman' ? 90 : this.spec === 'dario' ? 150 : 120;
-    const fadeInDur = 30;
-    const fadeOutDur = 30;
+    const charPhaseEnd = scaleCharacterFrame(BASE_VFX_ANCHOR_FRAMES[this.spec]);
+    const fadeInDur = scaleVfxDuration(30);
+    const fadeOutDur = scaleVfxDuration(30);
     const fadeOutStart = this.totalFrames - fadeOutDur;
     if (this.elapsed < charPhaseEnd) {
       this.dark.alpha = 0;
@@ -101,23 +130,29 @@ export class UltimateCinematic extends Container {
    */
   getCharacterPhaseKey(): string {
     if (this.spec === 'altman') {
-      // 前 120 帧 character 4 阶段 (each 30f = 0.5s)
-      if (this.elapsed < 30) return 'sit_down';
-      if (this.elapsed < 60) return 'lean_back';
-      if (this.elapsed < 90) return 'burst';
+      // 人物 pose 稍快，VFX 段接管后保持 recover。
+      if (this.elapsed < scaleCharacterFrame(30)) return 'sit_down';
+      if (this.elapsed < scaleCharacterFrame(60)) return 'lean_back';
+      if (this.elapsed < scaleCharacterFrame(90)) return 'burst';
       return 'recover'; // 90+ recover hold during VFX
     }
     if (this.spec === 'dario') {
-      // 前 150 帧 character 3 阶段 (each 50f ≈ 0.83s)
-      if (this.elapsed < 50) return 'judge_pose';
-      if (this.elapsed < 100) return 'slam';
+      if (this.elapsed < scaleCharacterFrame(50)) return 'judge_pose';
+      if (this.elapsed < scaleCharacterFrame(100)) return 'slam';
       return 'recover'; // 100+ hold during VFX
     }
-    // 前 120 帧 character 4 阶段 (each 30f = 0.5s)
-    if (this.elapsed < 30) return 'keynote_pose';
-    if (this.elapsed < 60) return 'countdown_pose';
-    if (this.elapsed < 90) return 'launch_pose';
+    if (this.elapsed < scaleCharacterFrame(30)) return 'keynote_pose';
+    if (this.elapsed < scaleCharacterFrame(60)) return 'countdown_pose';
+    if (this.elapsed < scaleCharacterFrame(90)) return 'launch_pose';
     return 'recover';
+  }
+
+  private when(frame: number): number {
+    return scaleVfxFrame(this.spec, frame);
+  }
+
+  private duration(frames: number): number {
+    return scaleVfxDuration(frames);
   }
 
   // === Altman 时间轴：5 秒 = 300 帧（史诗节奏）===
@@ -130,25 +165,25 @@ export class UltimateCinematic extends Container {
       }
     };
     // Phase 2 events (character anim 在 0-120 frames 完成后开始)
-    if (this.elapsed === 130) {
+    if (this.elapsed === this.when(130)) {
       fire('quote1', () =>
         this.spawnSubtitle('"我只是问了一个问题……"', STAGE_HEIGHT * 0.35, 30, 0xffffff, 70)
       );
     }
-    if (this.elapsed === 160) {
+    if (this.elapsed === this.when(160)) {
       fire('chair', () => this.spawnChair());
     }
-    if (this.elapsed === 200) {
+    if (this.elapsed === this.when(200)) {
       fire('headline', () =>
         this.spawnHeadline('OH MAN...\nHERE IT IS.', STAGE_HEIGHT * 0.42, 82, 0x4ade80, 90)
       );
     }
-    if (this.elapsed === 210) {
+    if (this.elapsed === this.when(210)) {
       fire('subtext', () =>
         this.spawnSubtitle('"人类突然显得有点多余。"', STAGE_HEIGHT * 0.66, 24, 0xa7f3d0, 80)
       );
     }
-    if (this.elapsed === 250) {
+    if (this.elapsed === this.when(250)) {
       fire('flash', () => this.spawnFullscreenFlash(0xffffff, 14));
       fire('shockwave', () => this.spawnShockwave());
       fire('mushroom', () => this.spawnMushroom());
@@ -156,7 +191,7 @@ export class UltimateCinematic extends Container {
         this.spawnHeadline('WHAT HAVE\nWE SHIPPED?!', STAGE_HEIGHT * 0.4, 64, 0xfacc15, 50)
       );
     }
-    if (this.elapsed === 280) {
+    if (this.elapsed === this.when(280)) {
       fire('outro', () =>
         this.spawnSubtitle('"Anyway, we have a lot to show you."', STAGE_HEIGHT * 0.5, 28, 0xffffff, 20)
       );
@@ -173,35 +208,35 @@ export class UltimateCinematic extends Container {
       }
     };
     // Phase 2 events (character anim 0-150 frames 完成后开始)
-    if (this.elapsed === 160) {
+    if (this.elapsed === this.when(160)) {
       fire('cathedral', () => this.spawnCathedral());
     }
-    if (this.elapsed === 175) {
+    if (this.elapsed === this.when(175)) {
       fire('headline1', () =>
         this.spawnSubtitle('"Identity Verification Required."', STAGE_HEIGHT * 0.3, 32, 0xfb923c, 70)
       );
     }
-    if (this.elapsed === 200) {
+    if (this.elapsed === this.when(200)) {
       fire('kyc1', () => this.spawnKYC(1, 60));
     }
-    if (this.elapsed === 240) {
+    if (this.elapsed === this.when(240)) {
       fire('kyc2', () => this.spawnKYC(2, 60));
     }
-    if (this.elapsed === 280) {
+    if (this.elapsed === this.when(280)) {
       fire('kyc3', () => this.spawnKYC(3, 60));
     }
-    if (this.elapsed === 330) {
+    if (this.elapsed === this.when(330)) {
       fire('flash', () => this.spawnFullscreenFlash(0xfb923c, 10));
       fire('pillar', () => this.spawnOrangePillar());
       fire('stamp', () => this.spawnAccessDeniedStamp());
       fire('miniStamps', () => this.spawnMiniStamps());
     }
-    if (this.elapsed === 345) {
+    if (this.elapsed === this.when(345)) {
       fire('hitText', () =>
         this.spawnHeadline('YOU WERE NOT SELECTED\nBY CLAUDE.', STAGE_HEIGHT * 0.4, 54, 0xff6b6b, 35)
       );
     }
-    if (this.elapsed === 365) {
+    if (this.elapsed === this.when(365)) {
       fire('outro', () =>
         this.spawnSubtitle('"For your safety."', STAGE_HEIGHT * 0.5, 28, 0xffffff, 15)
       );
@@ -218,30 +253,30 @@ export class UltimateCinematic extends Container {
       }
     };
 
-    if (this.elapsed === 130) {
+    if (this.elapsed === this.when(130)) {
       fire('orbit', () => this.spawnElectricOrbit());
     }
-    if (this.elapsed === 145) {
+    if (this.elapsed === this.when(145)) {
       fire('quote1', () =>
         this.spawnSubtitle('"The launch window is now."', STAGE_HEIGHT * 0.34, 32, 0x93c5fd, 70)
       );
     }
-    if (this.elapsed === 190) {
+    if (this.elapsed === this.when(190)) {
       fire('headline', () =>
         this.spawnHeadline('ORBITAL\nPATCH NOTES', STAGE_HEIGHT * 0.42, 70, 0x60a5fa, 85)
       );
     }
-    if (this.elapsed === 230) {
+    if (this.elapsed === this.when(230)) {
       fire('lines', () => this.spawnScreenLines());
     }
-    if (this.elapsed === 255) {
+    if (this.elapsed === this.when(255)) {
       fire('flash', () => this.spawnFullscreenFlash(0x93c5fd, 12));
       fire('rocket', () => this.spawnRocketPlume());
       fire('hitText', () =>
         this.spawnHeadline('REUSED\nTO ORBIT', STAGE_HEIGHT * 0.43, 70, 0xfacc15, 55)
       );
     }
-    if (this.elapsed === 305) {
+    if (this.elapsed === this.when(305)) {
       fire('outro', () =>
         this.spawnSubtitle('"Anyway, it was a successful test."', STAGE_HEIGHT * 0.5, 28, 0xffffff, 28)
       );
@@ -272,14 +307,16 @@ export class UltimateCinematic extends Container {
     t.x = STAGE_WIDTH / 2;
     t.y = y;
     this.addChild(t);
+    const enterFrames = this.duration(8);
+    const exitFrames = this.duration(10);
     this.elements.push({
       obj: t,
       birth: this.elapsed,
-      expire: this.elapsed + duration,
+      expire: this.elapsed + this.duration(duration),
       tick: (age, total) => {
         // 前 8 帧入场，最后 10 帧渐出
-        if (age < 8) t.alpha = age / 8;
-        else if (age > total - 10) t.alpha = (total - age) / 10;
+        if (age < enterFrames) t.alpha = age / enterFrames;
+        else if (age > total - exitFrames) t.alpha = (total - age) / exitFrames;
         else t.alpha = 1;
       },
     });
@@ -316,18 +353,20 @@ export class UltimateCinematic extends Container {
     t.y = y;
     t.scale.set(0.4);
     this.addChild(t);
+    const popFrames = this.duration(12);
+    const exitFrames = this.duration(12);
     this.elements.push({
       obj: t,
       birth: this.elapsed,
-      expire: this.elapsed + duration,
+      expire: this.elapsed + this.duration(duration),
       tick: (age, total) => {
-        if (age < 12) {
+        if (age < popFrames) {
           // 强烈出场：scale 0.4→1.2→1.0
-          const p = age / 12;
+          const p = age / popFrames;
           t.scale.set(p < 0.7 ? 0.4 + p * 1.14 : 1.2 - (p - 0.7) * 0.67);
           t.alpha = p < 0.5 ? p * 2 : 1;
-        } else if (age > total - 12) {
-          t.alpha = (total - age) / 12;
+        } else if (age > total - exitFrames) {
+          t.alpha = (total - age) / exitFrames;
         } else {
           t.scale.set(1);
           t.alpha = 1;
@@ -346,7 +385,7 @@ export class UltimateCinematic extends Container {
     this.addChild(sprite);
     const startY = -200;
     const endY = STAGE_HEIGHT * 0.78;
-    const fallFrames = 25;
+    const fallFrames = this.duration(25);
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
@@ -373,7 +412,7 @@ export class UltimateCinematic extends Container {
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + 35,
+      expire: this.elapsed + this.duration(35),
       tick: (age, total) => {
         const p = age / total;
         sprite.scale.set(0.05 + p * 2.5);
@@ -393,7 +432,7 @@ export class UltimateCinematic extends Container {
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + 50,
+      expire: this.elapsed + this.duration(50),
       tick: (age, total) => {
         const p = age / total;
         const grow = p < 0.4 ? p / 0.4 : 1;
@@ -415,7 +454,7 @@ export class UltimateCinematic extends Container {
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + 120,
+      expire: this.elapsed + this.duration(120),
       tick: (age, total) => {
         const p = age / total;
         sprite.scale.set(targetScale * (0.25 + Math.min(1, p * 2) * 0.75));
@@ -437,7 +476,7 @@ export class UltimateCinematic extends Container {
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + 62,
+      expire: this.elapsed + this.duration(62),
       tick: (age, total) => {
         const p = age / total;
         sprite.scale.set(targetScale * (0.4 + p * 0.8), targetScale * Math.min(1, p * 2.4));
@@ -459,7 +498,7 @@ export class UltimateCinematic extends Container {
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + 65,
+      expire: this.elapsed + this.duration(65),
       tick: (age, total) => {
         const p = age / total;
         sprite.alpha = p < 0.2 ? p / 0.2 : 1 - p;
@@ -477,7 +516,7 @@ export class UltimateCinematic extends Container {
     this.elements.push({
       obj: flash,
       birth: this.elapsed,
-      expire: this.elapsed + duration,
+      expire: this.elapsed + this.duration(duration),
       tick: (age, total) => {
         flash.alpha = 0.95 * (1 - age / total);
       },
@@ -493,14 +532,16 @@ export class UltimateCinematic extends Container {
     sprite.scale.set(targetScale);
     sprite.alpha = 0;
     this.addChild(sprite);
+    const enterFrames = this.duration(30);
+    const exitFrames = this.duration(40);
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
       expire: this.totalFrames - 5, // 教堂光贯穿整个 Dario cinematic
       tick: (age, total) => {
         // 前 30 帧渐入，最后 40 帧渐出
-        if (age < 30) sprite.alpha = (age / 30) * 0.85;
-        else if (age > total - 40) sprite.alpha = ((total - age) / 40) * 0.85;
+        if (age < enterFrames) sprite.alpha = (age / enterFrames) * 0.85;
+        else if (age > total - exitFrames) sprite.alpha = ((total - age) / exitFrames) * 0.85;
         else sprite.alpha = 0.85;
       },
     });
@@ -515,17 +556,19 @@ export class UltimateCinematic extends Container {
     sprite.scale.set(targetScale * 0.6);
     sprite.alpha = 0;
     this.addChild(sprite);
+    const enterFrames = this.duration(6);
+    const exitFrames = this.duration(6);
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + duration,
+      expire: this.elapsed + this.duration(duration),
       tick: (age, total) => {
-        if (age < 6) {
-          const p = age / 6;
+        if (age < enterFrames) {
+          const p = age / enterFrames;
           sprite.scale.set(targetScale * (0.6 + p * 0.4));
           sprite.alpha = p;
-        } else if (age > total - 6) {
-          sprite.alpha = (total - age) / 6;
+        } else if (age > total - exitFrames) {
+          sprite.alpha = (total - age) / exitFrames;
         } else {
           sprite.scale.set(targetScale);
           sprite.alpha = 1;
@@ -544,17 +587,19 @@ export class UltimateCinematic extends Container {
     sprite.scale.set(targetScale * 1.8);
     sprite.alpha = 0;
     this.addChild(sprite);
+    const enterFrames = this.duration(6);
+    const exitFrames = this.duration(12);
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + 60,
+      expire: this.elapsed + this.duration(60),
       tick: (age, total) => {
-        if (age < 6) {
-          const p = age / 6;
+        if (age < enterFrames) {
+          const p = age / enterFrames;
           sprite.scale.set(targetScale * (1.8 - p * 0.8));
           sprite.alpha = p;
-        } else if (age > total - 12) {
-          sprite.alpha = (total - age) / 12;
+        } else if (age > total - exitFrames) {
+          sprite.alpha = (total - age) / exitFrames;
         } else {
           sprite.scale.set(targetScale);
           sprite.alpha = 1;
@@ -575,7 +620,7 @@ export class UltimateCinematic extends Container {
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + 60,
+      expire: this.elapsed + this.duration(60),
       tick: (age, total) => {
         const p = age / total;
         sprite.scale.set(targetScale * (0.3 + p * 0.7), targetScale * Math.min(1, p * 2));
@@ -596,7 +641,7 @@ export class UltimateCinematic extends Container {
     this.elements.push({
       obj: sprite,
       birth: this.elapsed,
-      expire: this.elapsed + 50,
+      expire: this.elapsed + this.duration(50),
       tick: (age, total) => {
         const p = age / total;
         sprite.alpha = p < 0.3 ? p / 0.3 : 1 - (p - 0.3) / 0.7;
