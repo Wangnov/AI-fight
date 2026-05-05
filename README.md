@@ -33,8 +33,16 @@
   </tr>
 </table>
 
+<h2 align="center">投币开始</h2>
+
 <p align="center">
-  <img src="./docs/readme/arcade-marquee.svg" width="100%" alt="AI Fight arcade marquee">
+  <img src="./docs/readme/arcade-marquee-cn.svg" width="100%" alt="AI Fight Chinese arcade marquee">
+</p>
+
+<h2 align="center">Insert Coin</h2>
+
+<p align="center">
+  <img src="./docs/readme/arcade-marquee.svg" width="100%" alt="AI Fight English arcade marquee">
 </p>
 
 <p align="center">
@@ -43,39 +51,19 @@
 
 <table>
   <tr>
-    <td width="58%">
+    <td align="center" width="50%">
       <a href="https://aifight.wangnov-ai.com/">
         <img src="./docs/screenshots/01-menu.png" width="100%" alt="AI Fight title screen">
       </a>
-    </td>
-    <td width="42%" valign="top">
-      <h2>投币开始</h2>
-      <p><strong>AI Fight</strong> 是一个浏览器里的街机格斗小游戏：AI 公司全明星用 prompt、KYC、火箭、hitstop 和完全不适合董事会现场的方式解决模型治理分歧。</p>
       <p>
-        <a href="https://aifight.wangnov-ai.com/"><img src="https://img.shields.io/badge/PLAY-00e5ff?style=flat-square" alt="Play"></a>
-        <a href="#readme-cn"><img src="https://img.shields.io/badge/CN-ff7a18?style=flat-square" alt="Chinese section"></a>
-        <a href="#the-cabinet"><img src="https://img.shields.io/badge/FIGHTERS-66ffb0?style=flat-square" alt="Fighters"></a>
+        <a href="https://aifight.wangnov-ai.com/"><img src="https://img.shields.io/badge/PLAY-00e5ff?style=flat-square" alt="Play AI Fight"></a>
+        <a href="#readme-cn"><img src="https://img.shields.io/badge/中文-ff7a18?style=flat-square" alt="Chinese docs"></a>
+        <a href="#readme-en"><img src="https://img.shields.io/badge/ENGLISH-6bb6ff?style=flat-square" alt="English docs"></a>
       </p>
-      <pre><code>npm install
-npm run dev</code></pre>
-      <p><sub>PixiJS + Vite + TypeScript，使用 Cloudflare Workers Static Assets 发布。</sub></p>
     </td>
-  </tr>
-  <tr>
-    <td width="58%">
+    <td align="center" width="50%">
       <img src="./docs/readme/sam-ultimate-pulse.gif" width="100%" alt="Sam ultimate animated pulse">
-    </td>
-    <td width="42%" valign="top">
-      <h2>Insert Coin</h2>
-      <p><strong>AI Fight</strong> is a browser arcade fighter where AI-company all-stars settle model governance with prompts, KYC stamps, rockets, hitstop, and wildly inappropriate boardroom energy.</p>
-      <p>
-        <a href="https://aifight.wangnov-ai.com/"><img src="https://img.shields.io/badge/START-GAME-00e5ff?style=flat-square"></a>
-        <a href="#run-from-source"><img src="https://img.shields.io/badge/RUN-LOCAL-2ea44f?style=flat-square"></a>
-        <a href="#the-cabinet"><img src="https://img.shields.io/badge/VIEW-FIGHTERS-ff7a18?style=flat-square"></a>
-      </p>
-      <pre><code>npm install
-npm run dev</code></pre>
-      <p><sub>PixiJS + Vite + TypeScript, deployed as Cloudflare Workers Static Assets.</sub></p>
+      <p><sub>Sam ultimate impact loop</sub></p>
     </td>
   </tr>
 </table>
