@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">AI Fight arcade marquee</title>
+  <desc id="desc">A neon arcade marquee with three fighters and a glowing battle stage.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1">
+      <stop offset="0" stop-color="#06131f"/>
+      <stop offset="0.35" stop-color="#082f3f"/>
+      <stop offset="0.62" stop-color="#35152b"/>
+      <stop offset="1" stop-color="#24134f"/>
+    </linearGradient>
+    <linearGradient id="frame" x1="0" x2="1">
+      <stop offset="0" stop-color="#00e5ff"/>
+      <stop offset="0.5" stop-color="#ffd447"/>
+      <stop offset="1" stop-color="#ff2bd6"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="420" rx="24" fill="url(#bg)"/>
+  <rect x="22" y="22" width="1156" height="376" rx="20" fill="url(#grid)" stroke="url(#frame)" stroke-width="4"/>
+  <g opacity="0.55">
+    <path d="M90 355 C230 215 300 250 410 122 S620 92 710 226 900 322 1110 80" fill="none" stroke="#00e5ff" stroke-width="3"/>
+    <path d="M70 130 C210 310 360 330 520 184 S780 55 1120 340" fill="none" stroke="#ff7a18" stroke-width="3"/>
+  </g>
+  <g filter="url(#glow)">
+    <text x="600" y="92" text-anchor="middle" font-family="Impact, Arial Black, sans-serif" font-size="54" fill="#ffffff" letter-spacing="4">AI COMPANY ALL-STARS</text>
+    <text x="600" y="145" text-anchor="middle" font-family="Impact, Arial Black, sans-serif" font-size="32" fill="#00e5ff" letter-spacing="8">MODEL GOVERNANCE ARCADE</text>
+  </g>
+  <g transform="translate(72 194)">
+    <rect width="300" height="124" rx="14" fill="#071722" stroke="#00e5ff" stroke-width="3"/>
+    <text x="150" y="45" text-anchor="middle" font-family="Impact, Arial Black, sans-serif" font-size="34" fill="#66ffb0">SAM</text>
+    <text x="150" y="82" text-anchor="middle" font-family="monospace" font-size="16" fill="#d9fff2">SHIP / BENCHMARK / SOTA</text>
+  </g>
+  <g transform="translate(450 194)">
+    <rect width="300" height="124" rx="14" fill="#1b1015" stroke="#ff7a18" stroke-width="3"/>
+    <text x="150" y="45" text-anchor="middle" font-family="Impact, Arial Black, sans-serif" font-size="34" fill="#ff9c3f">DARIO</text>
+    <text x="150" y="82" text-anchor="middle" font-family="monospace" font-size="16" fill="#fff2d6">KYC / SAFETY / DENIED</text>
+  </g>
+  <g transform="translate(828 194)">
+    <rect width="300" height="124" rx="14" fill="#10162b" stroke="#7d34ff" stroke-width="3"/>
+    <text x="150" y="45" text-anchor="middle" font-family="Impact, Arial Black, sans-serif" font-size="34" fill="#6bb6ff">ELON</text>
+    <text x="150" y="82" text-anchor="middle" font-family="monospace" font-size="16" fill="#dfeaff">GROK / ROCKET / ORBIT</text>
+  </g>
+  <text x="600" y="372" text-anchor="middle" font-family="monospace" font-size="20" fill="#ffffff" opacity="0.86">PUBLIC BENEFIT?  PRIVATE ACCESS?  REUSED TO ORBIT?</text>
+</svg>
