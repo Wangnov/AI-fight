@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=venom&amp;height=230&amp;color=0:06131f,35:00e5ff,65:ff7a18,100:7d34ff&amp;text=AI%20FIGHT&amp;fontColor=ffffff&amp;fontSize=76&amp;stroke=111111&amp;strokeWidth=2&amp;animation=fadeIn&amp;section=header" width="100%" alt="AI Fight neon arcade header">
+  <img src="./docs/readme/logo-breathe.gif" width="760" alt="AI Fight breathing arcade logo">
 </p>
 
 <p align="center">
@@ -7,10 +7,6 @@
   <a href="https://github.com/Wangnov/AI-fight"><img src="https://img.shields.io/badge/GitHub-source-ffffff?style=for-the-badge&amp;logo=github&amp;logoColor=111111" alt="GitHub source"></a>
   <a href="https://pixijs.com/"><img src="https://img.shields.io/badge/PixiJS-renderer-ff2bd6?style=for-the-badge" alt="PixiJS"></a>
   <a href="https://developers.cloudflare.com/workers/static-assets/"><img src="https://img.shields.io/badge/Cloudflare-static%20assets-f38020?style=for-the-badge&amp;logo=cloudflare&amp;logoColor=white" alt="Cloudflare Workers Static Assets"></a>
-</p>
-
-<p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&amp;size=28&amp;duration=2600&amp;pause=700&amp;color=00E5FF&amp;center=true&amp;vCenter=true&amp;width=900&amp;lines=Sam+ships+the+model;Dario+blocks+the+access;Elon+reuses+to+orbit;PRESS+START+TO+SETTLE+AI+GOVERNANCE" alt="Typing arcade taglines">
 </p>
 
 <p align="center">
@@ -23,18 +19,53 @@
   <a href="./ASSET_NOTICE.md">Assets</a>
 </p>
 
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&amp;size=20&amp;duration=2400&amp;pause=500&amp;color=66FFB0&amp;center=true&amp;vCenter=true&amp;width=320&amp;lines=SAM%3A+SHIP+THE+MODEL;PROMPT+PRESSURE;SOTA+IMPACT" alt="Sam green typing slogan">
+    </td>
+    <td align="center" width="33%">
+      <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&amp;size=20&amp;duration=2400&amp;pause=500&amp;color=FF9C3F&amp;center=true&amp;vCenter=true&amp;width=320&amp;lines=DARIO%3A+CONTROL+THE+ACCESS;KYC+CHECKPOINT;SAFETY+STAMP" alt="Dario orange typing slogan">
+    </td>
+    <td align="center" width="33%">
+      <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&amp;size=20&amp;duration=2400&amp;pause=500&amp;color=6BB6FF&amp;center=true&amp;vCenter=true&amp;width=320&amp;lines=ELON%3A+REUSE+TO+ORBIT;GROK+VOLTAGE;ROCKET+LOOP" alt="Elon blue typing slogan">
+    </td>
+  </tr>
+</table>
+
 <p align="center">
   <img src="./docs/readme/arcade-marquee.svg" width="100%" alt="AI Fight arcade marquee">
 </p>
 
+<p align="center">
+  <img src="./docs/readme/readme-bitmap-stage.png" width="100%" alt="AI Fight generated arcade stage">
+</p>
+
 <table>
   <tr>
-    <td width="64%">
+    <td width="58%">
       <a href="https://aifight.wangnov-ai.com/">
         <img src="./docs/screenshots/01-menu.png" width="100%" alt="AI Fight title screen">
       </a>
     </td>
-    <td width="36%" valign="top">
+    <td width="42%" valign="top">
+      <h2>投币开始</h2>
+      <p><strong>AI Fight</strong> 是一个浏览器里的街机格斗小游戏：AI 公司全明星用 prompt、KYC、火箭、hitstop 和完全不适合董事会现场的方式解决模型治理分歧。</p>
+      <p>
+        <a href="https://aifight.wangnov-ai.com/"><img src="https://img.shields.io/badge/PLAY-00e5ff?style=flat-square" alt="Play"></a>
+        <a href="#readme-cn"><img src="https://img.shields.io/badge/CN-ff7a18?style=flat-square" alt="Chinese section"></a>
+        <a href="#the-cabinet"><img src="https://img.shields.io/badge/FIGHTERS-66ffb0?style=flat-square" alt="Fighters"></a>
+      </p>
+      <pre><code>npm install
+npm run dev</code></pre>
+      <p><sub>PixiJS + Vite + TypeScript，使用 Cloudflare Workers Static Assets 发布。</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="58%">
+      <img src="./docs/readme/sam-ultimate-pulse.gif" width="100%" alt="Sam ultimate animated pulse">
+    </td>
+    <td width="42%" valign="top">
       <h2>Insert Coin</h2>
       <p><strong>AI Fight</strong> is a browser arcade fighter where AI-company all-stars settle model governance with prompts, KYC stamps, rockets, hitstop, and wildly inappropriate boardroom energy.</p>
       <p>
@@ -80,7 +111,7 @@ npm run dev</code></pre>
 <table>
   <tr>
     <td align="center" width="33%">
-      <img src="./docs/screenshots/04-sam-ultimate.png" width="100%" alt="Sam ultimate attack">
+      <img src="./docs/readme/sam-ultimate-pulse.gif" width="100%" alt="Sam ultimate animated attack">
       <sub><strong>Sam:</strong> What have we shipped?</sub>
     </td>
     <td align="center" width="33%">
