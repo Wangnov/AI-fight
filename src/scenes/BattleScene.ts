@@ -91,6 +91,7 @@ export class BattleScene extends Scene {
   private cinematic: UltimateCinematic | null = null;
   private cinematicAttackerId: 'P1' | 'P2' | null = null;
   private cinematicDamageDealt = false;
+  private screenEchoCooldownFrames = 0;
 
   // 开场倒计时（3 → 2 → 1 → FIGHT!）冻结战斗
   private countdownFrames = 240; // 总长 4 秒 (60 fps × 4)
@@ -352,6 +353,9 @@ export class BattleScene extends Scene {
     if (!this.ended) {
       this.timeLeftMS -= deltaMS;
     }
+    if (this.screenEchoCooldownFrames > 0) {
+      this.screenEchoCooldownFrames -= 1;
+    }
 
     // === 大招分镜：独立时间轴，期间不推进战斗也不接受输入 ===
     if (this.cinematic) {
@@ -547,6 +551,7 @@ export class BattleScene extends Scene {
   private spawnScreenBitmapFeedback(events: readonly CombatEvent[]): void {
     const renderer = this.renderer;
     if (!renderer || !this.screenBitmapFx) return;
+    if (this.screenEchoCooldownFrames > 0) return;
     const strongest =
       events.find((ev) => ev.kind === 'ultimate') ??
       events.find((ev) => ev.kind === 'combo2') ??
@@ -556,6 +561,7 @@ export class BattleScene extends Scene {
     const style = getVfxStyle(strongest.attackerMoveSetId);
     const tint = strongest.blocked ? style.blocked : style.screen;
     if (strongest.kind === 'combo2' || strongest.kind === 'ultimate') {
+      this.screenEchoCooldownFrames = strongest.kind === 'ultimate' ? 48 : 18;
       this.screenBitmapFx.spawnFrameEcho(
         renderer,
         this.worldLayer,

@@ -143,9 +143,25 @@ import {
 
   showMenu();
 
+  const FIXED_STEP_MS = 1000 / 60;
+  const MAX_ACCUMULATED_MS = 100;
+  const MAX_STEPS_PER_TICK = 5;
+  let accumulatedMS = 0;
+
   app.ticker.add((time) => {
-    manager.update(time.deltaMS);
-    input.endFrame();
+    accumulatedMS += Math.min(time.deltaMS, MAX_ACCUMULATED_MS);
+    let steps = 0;
+
+    while (accumulatedMS >= FIXED_STEP_MS && steps < MAX_STEPS_PER_TICK) {
+      manager.update(FIXED_STEP_MS);
+      input.endFrame();
+      accumulatedMS -= FIXED_STEP_MS;
+      steps += 1;
+    }
+
+    if (steps === MAX_STEPS_PER_TICK) {
+      accumulatedMS = 0;
+    }
   });
 })().catch((err) => {
   console.error('[AI-Fight] 启动失败:', err);
