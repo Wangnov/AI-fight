@@ -19,6 +19,7 @@ const MENU_ASSET_PATHS = [
   '/sprites/scene/menu_dario.png',
   '/sprites/scene/menu_elon.png',
   '/sprites/scene/menu_title.png',
+  '/sprites/scene/result_elon.png',
   '/sprites/scene/portrait_altman.png',
   '/sprites/scene/portrait_dario.png',
   '/sprites/scene/portrait_elon.png',

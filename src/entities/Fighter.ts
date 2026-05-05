@@ -490,7 +490,7 @@ export class Fighter extends Container {
   }
 
   private tuneAttackData(kind: AttackKind, data: AttackData): AttackData {
-    if (kind === 'combo2' && this.preset.name === 'ALTMAN') {
+    if (kind === 'combo2' && this.preset.moveSetId === 'altman') {
       return {
         ...data,
         hitboxOffsetX: 82,

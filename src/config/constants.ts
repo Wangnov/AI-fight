@@ -218,7 +218,7 @@ export interface FighterPreset {
 }
 
 export const PRESET_ALTMAN: FighterPreset = {
-  name: 'ALTMAN',
+  name: 'Sam',
   moveSetId: 'altman',
   bodyColor: ALTMAN_COLOR,
   projectileColor: ALTMAN_PROJECTILE_COLOR,
@@ -229,7 +229,7 @@ export const PRESET_ALTMAN: FighterPreset = {
 };
 
 export const PRESET_DARIO: FighterPreset = {
-  name: 'DARIO',
+  name: 'Dario',
   moveSetId: 'dario',
   bodyColor: DARIO_COLOR,
   projectileColor: DARIO_PROJECTILE_COLOR,
@@ -240,7 +240,7 @@ export const PRESET_DARIO: FighterPreset = {
 };
 
 export const PRESET_ELON: FighterPreset = {
-  name: 'ELON MASK',
+  name: 'Elon',
   moveSetId: 'elon',
   bodyColor: ELON_COLOR,
   projectileColor: ELON_PROJECTILE_COLOR,

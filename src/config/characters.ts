@@ -24,7 +24,7 @@ export interface BattleSelections {
 export const CHARACTER_ROSTER: readonly CharacterDefinition[] = [
   {
     id: 'altman',
-    name: 'ALTMAN',
+    name: 'Sam',
     portraitPath: '/sprites/scene/portrait_altman.png',
     color: 0x4ade80,
     accentColor: 0x22d3ee,
@@ -32,7 +32,7 @@ export const CHARACTER_ROSTER: readonly CharacterDefinition[] = [
   },
   {
     id: 'dario',
-    name: 'DARIO',
+    name: 'Dario',
     portraitPath: '/sprites/scene/portrait_dario.png',
     color: 0xfb923c,
     accentColor: 0xf97316,
@@ -40,7 +40,7 @@ export const CHARACTER_ROSTER: readonly CharacterDefinition[] = [
   },
   {
     id: 'elon',
-    name: 'ELON MASK',
+    name: 'Elon',
     portraitPath: '/sprites/scene/portrait_elon.png',
     color: 0x60a5fa,
     accentColor: 0xa78bfa,

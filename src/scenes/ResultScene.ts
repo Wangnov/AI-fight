@@ -99,7 +99,7 @@ export class ResultScene extends Scene {
 
     // === Winner full pose (large) ===
     if (winner !== 'draw' && winnerCharacter) {
-      const path = `/sprites/scene/menu_${winnerCharacter.id}.png`;
+      const path = `/sprites/scene/result_${winnerCharacter.id}.png`;
       try {
         const tex = await Assets.load<Texture>(path);
         this.winnerPose = new Sprite(tex);
@@ -110,18 +110,7 @@ export class ResultScene extends Scene {
         this.winnerPose.y = STAGE_HEIGHT - 8;
         this.addChild(this.winnerPose);
       } catch {
-        // fallback to win sprite from spriteset
-        if (opts.sprites) {
-          const winnerSprites = opts.sprites[winnerCharacter.id];
-          this.winnerPose = new Sprite(winnerSprites.get('win'));
-          this.winnerPose.anchor.set(0.5, 1);
-          const targetH = STAGE_HEIGHT * 0.78;
-          const s = targetH / Math.max(this.winnerPose.texture.height, 1);
-          this.winnerPose.scale.set(winnerCharacter.preset.facingRight ? s : -s, s);
-          this.winnerPose.x = STAGE_WIDTH * 0.30;
-          this.winnerPose.y = STAGE_HEIGHT - 8;
-          this.addChild(this.winnerPose);
-        }
+        await this.spawnFallbackWinnerPose(opts, winnerCharacter);
       }
     }
 
@@ -266,6 +255,29 @@ export class ResultScene extends Scene {
       hint.y = STAGE_HEIGHT - 45;
       this.addChild(hint);
     }
+  }
+
+  private async spawnFallbackWinnerPose(
+    opts: ResultSceneOptions,
+    winnerCharacter: CharacterDefinition
+  ): Promise<void> {
+    try {
+      const tex = await Assets.load<Texture>(`/sprites/scene/menu_${winnerCharacter.id}.png`);
+      this.winnerPose = new Sprite(tex);
+      const targetH = STAGE_HEIGHT * 0.92;
+      this.winnerPose.scale.set(targetH / tex.height);
+    } catch {
+      if (!opts.sprites) return;
+      const winnerSprites = opts.sprites[winnerCharacter.id];
+      this.winnerPose = new Sprite(winnerSprites.get('win'));
+      const targetH = STAGE_HEIGHT * 0.78;
+      const s = targetH / Math.max(this.winnerPose.texture.height, 1);
+      this.winnerPose.scale.set(winnerCharacter.preset.facingRight ? s : -s, s);
+    }
+    this.winnerPose.anchor.set(0.5, 1);
+    this.winnerPose.x = STAGE_WIDTH * 0.30;
+    this.winnerPose.y = STAGE_HEIGHT - 8;
+    this.addChild(this.winnerPose);
   }
 
   update(_deltaMS: number): void {
