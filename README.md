@@ -151,7 +151,7 @@ npm run cf:deploy
 
 ### 资产管线
 
-这个项目大量使用 AI 生成位图资产。资产进入游戏前通常要经过参考图锁定、magenta 背景或 strict grid 生成、chroma 抠图、帧切片、尺寸归一化、朝向检查和游戏内播放验证。
+这个项目大量使用 AI 生成位图资产。资产进入游戏前通常要经过参考图锁定、magenta 背景或 strict grid 生成、chroma 抠图、帧切片、尺寸归一化、朝向检查和游戏内播放验证。项目内流程见 [AI_IMAGE_PIPELINE.md](./docs/AI_IMAGE_PIPELINE.md)，脚本入口索引见 [assets_manifest.json](./tools/assets_manifest.json)。
 
 <a id="readme-en"></a>
 

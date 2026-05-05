@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "description": "AI Fight project-owned AI image asset pipeline index. External gpt-image-2-skill runtime is a tool dependency, not vendored pipeline logic.",
+  "externalDependencies": [
+    {
+      "name": "gpt-image-2-skill",
+      "role": "image generation and transparency extraction runtime",
+      "typicalPaths": [
+        "/Users/wangnov/.agents/skills/gpt-image-2-skill",
+        "/Users/wangnov/.claude/skills/gpt-image-2-skill"
+      ]
+    },
+    {
+      "name": "rsvg-convert",
+      "role": "render LobeHub SVG logo references to PNG"
+    },
+    {
+      "name": "oxipng",
+      "role": "optimize generated stage backgrounds"
+    },
+    {
+      "name": "Pillow",
+      "role": "local image processing for refs, slicing, sheets, and normalization"
+    },
+    {
+      "name": "MediaPipe",
+      "role": "optional pose detection and pose-based normalization"
+    }
+  ],
+  "referenceRoots": {
+    "people": "tools/asset_refs",
+    "actionSheets": "tools/asset_refs/action_refs",
+    "backgrounds": "tools/asset_refs/background_refs",
+    "logos": "tools/asset_refs/logo_refs",
+    "layoutGuides": "tools/layout_guides",
+    "poseReports": "tools/_pose"
+  },
+  "outputRoots": {
+    "characterSprites": "public/sprites/{altman,dario,elon}",
+    "sceneSprites": "public/sprites/scene",
+    "vfxSprites": "public/sprites/vfx",
+    "readmeAssets": "docs/readme",
+    "readmeScreenshots": "docs/screenshots"
+  },
+  "pipelines": [
+    {
+      "id": "elon_action_frames",
+      "status": "current",
+      "entrypoints": [
+        "tools/build_elon_action_refs.py",
+        "tools/regen_elon_from_action_refs.sh"
+      ],
+      "inputs": [
+        "tools/asset_refs/elon_musk_2024_cropped.jpg",
+        "public/sprites/elon/elon_idle_01.png",
+        "tools/asset_refs/action_refs/kof_kyo_cleanpng.webp",
+        "tools/asset_refs/action_refs/ryu_full_sheet.png"
+      ],
+      "generatedReferences": [
+        "tools/asset_refs/action_refs/elon_action_refs/*_sheet.png",
+        "tools/asset_refs/action_refs/elon_action_refs/*_ref.png"
+      ],
+      "outputs": [
+        "public/sprites/elon/elon_*.png"
+      ],
+      "postprocess": [
+        "transparent extract --method chroma --matte-color #ff00ff --strict",
+        "tools/normalize_sprite.py --dir public/sprites/elon --in-place",
+        "tools/normalize_elon_scale.py --dir public/sprites/elon"
+      ],
+      "notes": "Use KOF/SF references for action mechanics. Do not rely on text-only prompts for animation continuity."
+    },
+    {
+      "id": "stage_backgrounds",
+      "status": "current",
+      "entrypoints": [
+        "tools/gen_stage_backgrounds.sh"
+      ],
+      "inputs": [
+        "tools/asset_refs/background_refs/base_bg_arena.png",
+        "tools/asset_refs/background_refs/base_menu_bg.png",
+        "tools/asset_refs/logo_refs/openai.svg",
+        "tools/asset_refs/logo_refs/anthropic.svg",
+        "tools/asset_refs/logo_refs/claude.svg",
+        "tools/asset_refs/logo_refs/grok.svg"
+      ],
+      "outputs": [
+        "public/sprites/scene/menu_bg.png",
+        "public/sprites/scene/bg_arena.png",
+        "public/sprites/scene/bg_arena_altman_dario.png",
+        "public/sprites/scene/bg_arena_altman_elon.png",
+        "public/sprites/scene/bg_arena_dario_elon.png",
+        "public/sprites/scene/bg_arena_mirror.png"
+      ],
+      "postprocess": [
+        "rsvg-convert logo SVGs to PNG when missing",
+        "oxipng -o 4 --strip safe"
+      ],
+      "notes": "Logo references are generation inputs and should be painted into architecture, not pasted as overlays."
+    },
+    {
+      "id": "vfx_batch",
+      "status": "current",
+      "entrypoints": [
+        "tools/gen_vfx.sh"
+      ],
+      "inputs": [
+        "prompt list embedded in tools/gen_vfx.sh"
+      ],
+      "outputs": [
+        "public/sprites/vfx/*.png"
+      ],
+      "postprocess": [
+        "transparent generate through gpt-image-2-skill"
+      ],
+      "notes": "Use for isolated hit sparks, projectiles, UI stamps, and combat effect sprites."
+    },
+    {
+      "id": "altman_dario_legacy_pose_generation",
+      "status": "legacy",
+      "entrypoints": [
+        "tools/gen_all_walk_strips.sh",
+        "tools/gen_pose_walks.sh",
+        "tools/gen_pose_jabs.sh",
+        "tools/gen_pose_combo1.sh",
+        "tools/gen_pose_combo2.sh",
+        "tools/gen_single_frames.sh",
+        "tools/regen_dario_walk.sh",
+        "tools/regen_walk_down_up.sh",
+        "tools/extract_all.sh"
+      ],
+      "inputs": [
+        "public/sprites/altman/altman_idle_01.png",
+        "public/sprites/dario/dario_idle_01.png",
+        "tools/_skeleton/*.png",
+        "tools/layout_guides/*.png"
+      ],
+      "outputs": [
+        "public/sprites/altman/*.png",
+        "public/sprites/dario/*.png"
+      ],
+      "postprocess": [
+        "tools/extract_strip.py",
+        "tools/slice_walk_strip.py",
+        "tools/normalize_sprite.py"
+      ],
+      "notes": "Useful for reproducing older work, but new high-risk animations should prefer action-sheet references."
+    },
+    {
+      "id": "readme_screenshots",
+      "status": "current",
+      "entrypoints": [
+        "tools/capture_readme_screenshots.mjs"
+      ],
+      "inputs": [
+        "local game runtime screenshots"
+      ],
+      "outputs": [
+        "docs/screenshots/*.png"
+      ],
+      "postprocess": [
+        "manual visual selection for README storytelling"
+      ],
+      "notes": "Run through npm script: npm run screenshots:readme."
+    }
+  ],
+  "qaChecklist": [
+    "transparent background or clean chroma extraction",
+    "no magenta fringe after resizing",
+    "stable character identity and outfit",
+    "full body visible unless pose intentionally lies down",
+    "standing frames share a consistent foot baseline",
+    "crouch and knockdown are not scaled into floating giant bodies",
+    "one action-specific sheet inspected visually before commit",
+    "new asset is registered in src/assets or scene config",
+    "npm run build passes",
+    "affected action or scene is tested in game"
+  ]
+}
