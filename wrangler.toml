@@ -1,6 +1,10 @@
 name = "ai-fight"
 compatibility_date = "2026-05-05"
 
+routes = [
+  { pattern = "aifight.wangnov-ai.com", custom_domain = true }
+]
+
 [assets]
 directory = "./dist/"
 not_found_handling = "single-page-application"

@@ -4,6 +4,8 @@ This project deploys as Cloudflare Workers Static Assets without a Worker script
 That keeps runtime usage low: matching static asset requests are served as assets,
 not as Worker CPU work.
 
+Production URL: `https://aifight.wangnov-ai.com/`
+
 ## Local checks
 
 ```bash
