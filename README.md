@@ -27,6 +27,25 @@
 
 ---
 
+## 游戏截图 / Screenshots
+
+<p align="center">
+  <img src="./docs/screenshots/01-menu.png" width="420" alt="AI Fight title screen">
+  <img src="./docs/screenshots/02-character-select.png" width="420" alt="Character select screen">
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/03-hit-feedback.png" width="420" alt="Battle hit feedback">
+  <img src="./docs/screenshots/04-sam-ultimate.png" width="420" alt="Sam ultimate attack">
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/05-dario-ultimate.png" width="420" alt="Dario ultimate attack">
+  <img src="./docs/screenshots/06-elon-ultimate.png" width="420" alt="Elon ultimate attack">
+</p>
+
+---
+
 <a id="readme-cn"></a>
 
 # 中文
@@ -140,6 +159,8 @@ src/
 public/
   sprites/         角色、场景和 VFX 位图资产
   favicon.png      由开屏 logo 裁切而来
+docs/
+  screenshots/     README 游戏截图
 tools/             资产生成、切片、归一化辅助脚本
 ```
 
@@ -280,6 +301,8 @@ src/
 public/
   sprites/         fighter, scene, and VFX bitmap assets
   favicon.png      cropped from the title logo
+docs/
+  screenshots/     README gameplay screenshots
 tools/             asset generation, slicing, and normalization helpers
 ```
 
